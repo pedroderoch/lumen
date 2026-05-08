@@ -1,0 +1,171 @@
+{% extends "layout.html.twig" %}
+
+{# Detecta se é Modo Edição ou Cadastro #}
+{% set modo = alerta.id ? 'Editar' : 'Adicionar' %}
+
+{% block title %}{{ modo }} Alerta - Lumen Fintech{% endblock %}
+
+{% block page_title %}Alertas{% endblock %}
+{% block page_subtitle %}{{ modo == 'Editar' ? 'Atualize as informações do seu lembrete' : 'Crie um novo alerta para lembretes importantes' }}{% endblock %}
+
+{% block content %}
+    <div class="max-w-3xl mx-auto">
+        <!-- Card do Formulário -->
+        <div class="bg-white dark:bg-darkCard p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-darkBorder pb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
+                    <i class="ph-bold ph-bell-ringing text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Dados do Alerta</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        {{ modo == 'Editar' ? 'Edite os detalhes do alerta abaixo.' : 'Preencha as informações para configurar o novo lembrete.' }}
+                    </p>
+                </div>
+            </div>
+
+            {# Alertas de Erro vindos do PHP #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <i class="ph-fill ph-warning-circle text-lg"></i>
+                        <span>Verifique os erros abaixo:</span>
+                    </div>
+                    <ul class="list-disc list-inside ml-2">
+                        {% for erro in session_get('errors') %}
+                            <li>{{ erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {# Define a rota baseada no modo #}
+            <form action="{{ modo == 'Editar' ? '/alertas/atualizar/' ~ alerta.id : '/alertas/criar' }}" method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Descrição do Alerta -->
+                    <div class="md:col-span-2">
+                        <label for="descricao" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição do Alerta <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-text-t text-lg"></i>
+                            </div>
+                            <input type="text" id="descricao" name="descricao" value="{{ old['descricao'] ?? alerta.descricao ?? '' }}" required
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Ex: Cancelar Netflix, Revisão do Carro...">
+                        </div>
+                    </div>
+
+                    <!-- Data do Alerta (Quando avisar) -->
+                    <div>
+                        <label for="data_alerta" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data do Alerta <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-calendar-blank text-lg"></i>
+                            </div>
+                            <input type="date" id="data_alerta" name="data_alerta" value="{{ old['data_alerta'] ?? alerta.data_alerta ?? '' }}" required
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Data de Vencimento (Prazo final) -->
+                    <div>
+                        <label for="data_vencimento" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data de Vencimento</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-calendar-check text-lg"></i>
+                            </div>
+                            <input type="date" id="data_vencimento" name="data_vencimento" value="{{ old['data_vencimento'] ?? alerta.data_vencimento ?? '' }}"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Cor do Alerta -->
+                    <div>
+                        <label for="cor" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cor do Alerta <span class="text-rose-500">*</span></label>
+                        <div class="relative flex items-center gap-3">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-palette text-lg"></i>
+                            </div>
+                            <input type="color" id="cor" name="cor" value="{{ old['cor'] ?? alerta.cor ?? '#eab308' }}" required oninput="atualizarPreview()"
+                                class="h-12 w-full pl-10 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer p-1 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Ícone do Alerta -->
+                    <div>
+                        <label for="icone" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ícone <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-star text-lg"></i>
+                            </div>
+                            <input type="text" id="icone" name="icone" value="{{ old['icone'] ?? alerta.icone ?? 'ph-bell' }}" required oninput="atualizarPreview()"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                placeholder="Ex: ph-warning, ph-calendar...">
+                        </div>
+                    </div>
+
+                    <!-- Situação (Apenas no Modo Editar) -->
+                    {% if modo == 'Editar' %}
+                    <div class="md:col-span-2">
+                        <label for="situacao_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status do Alerta</label>
+                        <select id="situacao_id" name="situacao_id" 
+                            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                            {% for situacao in situacoes %}
+                                <option value="{{ situacao.id }}" {{ (old['situacao_id'] ?? alerta.situacao_id) == situacao.id ? 'selected' : '' }}>
+                                    {{ situacao.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Preview Visual -->
+                    <div class="md:col-span-2 mt-2 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-darkBorder flex items-center gap-4">
+                        <div id="preview_bg" class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-colors" 
+                             style="background-color: {{ old['cor'] ?? alerta.cor ?? '#eab308' }}">
+                            <i id="preview_icon" class="ph-fill {{ old['icone'] ?? alerta.icone ?? 'ph-bell' }} text-2xl transition-all"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 dark:text-white">Pré-visualização do Card</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Assim será exibido no seu painel de lembretes.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100 dark:border-darkBorder mt-8">
+                    <a href="/alertas" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors text-center inline-block">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primaryHover shadow-sm transition-colors flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i> {{ modo == 'Editar' ? 'Atualizar Alerta' : 'Salvar Alerta' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function atualizarPreview() {
+            const corInput = document.getElementById('cor').value;
+            let iconeInput = document.getElementById('icone').value.trim();
+            const previewBg = document.getElementById('preview_bg');
+            const previewIcon = document.getElementById('preview_icon');
+            
+            if (iconeInput !== '' && !iconeInput.startsWith('ph-')) {
+                iconeInput = 'ph-' + iconeInput;
+            } else if (iconeInput === '') {
+                iconeInput = 'ph-bell';
+            }
+            
+            previewBg.style.backgroundColor = corInput;
+            previewIcon.className = 'ph-fill text-2xl transition-all ' + iconeInput;
+        }
+
+        document.addEventListener("DOMContentLoaded", atualizarPreview);
+    </script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "layout.html.twig" %}
+
+{# Define se é modo edição ou cadastro baseado na existência do ID da conta #}
+{% set modo = conta.id ? 'Editar' : 'Adicionar' %}
+
+{% block title %}{{ modo }} Conta - Lumen Fintech{% endblock %}
+
+{% block page_title %}Contas Bancárias{% endblock %}
+{% block page_subtitle %}
+    {{ modo == 'Editar' ? 'Atualize as informações da sua instituição' : 'Adicione uma nova instituição ou carteira física' }}
+{% endblock %}
+
+{% block content %}
+    <div class="max-w-3xl mx-auto">
+        <!-- Card do Formulário -->
+        <div class="bg-white dark:bg-darkCard p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-darkBorder pb-4">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center">
+                    <i class="ph-bold ph-bank text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Dados da Conta</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        {{ modo == 'Editar' ? 'Altere os dados para atualizar o seu saldo.' : 'Preencha as informações para adicionar um novo saldo.' }}
+                    </p>
+                </div>
+            </div>
+
+            {# Alertas de Erro vindos do PHP #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <i class="ph-fill ph-warning-circle text-lg"></i>
+                        <span>Verifique os erros abaixo:</span>
+                    </div>
+                    <ul class="list-disc list-inside ml-2">
+                        {% for erro in session_get('errors') %}
+                            <li>{{ erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {# A action muda dinamicamente conforme o modo #}
+            <form action="{{ modo == 'Editar' ? '/contas/atualizar/' ~ conta.id : '/contas/criar' }}" method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Nome da Conta -->
+                    <div class="md:col-span-2">
+                        <label for="nome" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome da Instituição/Carteira <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-bank text-lg"></i>
+                            </div>
+                            <input type="text" id="nome" name="nome" value="{{ old['nome'] ?? conta.nome ?? '' }}" required
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Ex: Itaú, Nubank, Carteira Física...">
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Conta -->
+                    <div>
+                        <label for="tipo" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo de Conta <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-wallet text-lg"></i>
+                            </div>
+                            <select id="tipo" name="tipo" required
+                                class="w-full pl-10 pr-10 py-2.5 appearance-none bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
+                                {% set tipo_selecionado = old['tipo'] ?? conta.tipo ?? 'corrente' %}
+                                <option value="corrente" {{ tipo_selecionado == 'corrente' ? 'selected' : '' }}>Conta Corrente</option>
+                                <option value="poupanca" {{ tipo_selecionado == 'poupanca' ? 'selected' : '' }}>Conta Poupança</option>
+                                <option value="investimento" {{ tipo_selecionado == 'investimento' ? 'selected' : '' }}>Conta Investimento</option>
+                                <option value="dinheiro" {{ tipo_selecionado == 'dinheiro' ? 'selected' : '' }}>Dinheiro em Espécie</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph-bold ph-caret-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saldo Atual -->
+                    <div>
+                        <label for="saldo_atual" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Saldo Atual (R$) <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-medium">
+                                R$
+                            </div>
+                            <input type="text" id="saldo_atual" name="saldo_atual" 
+                                value="{{ old['saldo_atual'] ?? (conta.saldo_atual ? conta.saldo_atual|number_format(2, ',', '.') : '') }}" 
+                                required onkeyup="formatarMoeda(this)"
+                                class="w-full pl-10 pr-4 py-2.5 font-semibold bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="0,00">
+                        </div>
+                    </div>
+
+                    <!-- Cor Principal -->
+                    <div class="md:col-span-2">
+                        <label for="cor" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cor Principal <span class="text-rose-500">*</span></label>
+                        <div class="relative flex items-center gap-3">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-palette text-lg"></i>
+                            </div>
+                            <input type="color" id="cor" name="cor" value="{{ old['cor'] ?? conta.cor ?? '#1C325F' }}" required
+                                class="h-12 w-full pl-10 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer p-1 transition-all">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Escolha uma cor para identificar facilmente esta conta no dashboard.</p>
+                    </div>
+
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100 dark:border-darkBorder mt-8">
+                    <a href="/contas" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-center inline-block">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primaryHover shadow-sm shadow-indigo-200 dark:shadow-none transition-colors flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i> {{ modo == 'Editar' ? 'Atualizar Conta' : 'Salvar Conta' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script da Máscara de Dinheiro -->
+    <script>
+        function formatarMoeda(i) {
+            var v = i.value.replace(/\D/g,'');
+            v = (v/100).toFixed(2) + '';
+            v = v.replace(".", ",");
+            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            i.value = v;
+        }
+    </script>
+{% endblock %}

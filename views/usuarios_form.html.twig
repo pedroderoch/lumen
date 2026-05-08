@@ -1,0 +1,164 @@
+{% extends "layout.html.twig" %}
+
+{# Define se é modo edição ou cadastro baseado na existência do ID #}
+{% set modo = usuario.id ? 'Editar' : 'Adicionar' %}
+
+{% block title %}{{ modo }} Usuário - Lumen Fintech{% endblock %}
+
+{% block page_title %}Usuários{% endblock %}
+{% block page_subtitle %}{{ modo == 'Editar' ? 'Atualizar dados do acesso' : 'Adicionar um novo acesso ao sistema' }}{% endblock %}
+
+{% block content %}
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white dark:bg-darkCard p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-darkBorder pb-4">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-indigo-400 flex items-center justify-center">
+                    <i class="ph-bold {{ modo == 'Editar' ? 'ph-user-gear' : 'ph-user-plus' }} text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">{{ modo }} Usuário</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        {{ modo == 'Editar' ? 'Altere as informações necessárias abaixo.' : 'Preencha os dados para criar um novo Usuário!' }}
+                    </p>
+                </div>
+            </div>
+
+            {# Alertas de Erro #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <i class="ph-fill ph-warning-circle text-lg"></i>
+                        <span>Verifique os erros abaixo:</span>
+                    </div>
+                    <ul class="list-disc list-inside ml-2">
+                        {% for erro in session_get('errors') %}
+                            <li>{{ erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {# Ação dinâmica do Formulário #}
+            <form action="{{ modo == 'Editar' ? '/usuarios/atualizar/' ~ usuario.id : '/usuarios/criar' }}" 
+                  method="POST" id="formUsuario" class="space-y-6" enctype="multipart/form-data">
+                
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Nome Completo -->
+                <div>
+                    <label for="nome" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome Completo <span class="text-rose-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="ph ph-user text-lg"></i>
+                        </div>
+                        <input type="text" id="nome" name="nome" value="{{ old['nome'] ?? usuario.nome ?? '' }}" required
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                            placeholder="Ex: João da Silva">
+                    </div>
+                </div>
+
+                <!-- E-mail -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-mail <span class="text-rose-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="ph ph-envelope-simple text-lg"></i>
+                        </div>
+                        <input type="email" id="email" name="email" value="{{ old['email'] ?? usuario.email ?? '' }}" required
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                            placeholder="exemplo@email.com">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nível de Acesso -->
+                    <div>
+                        <label for="nivel" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nível de Acesso <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-shield-check text-lg"></i>
+                            </div>
+                            {% set nivel_sel = old['nivel'] ?? usuario.nivel ?? 'usuario' %}
+                            <select id="nivel" name="nivel" required
+                                class="w-full pl-10 pr-10 py-2.5 appearance-none bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
+                                <option value="usuario" {{ nivel_sel == 'usuario' ? 'selected' : '' }}>Usuário Padrão</option>
+                                <option value="admin" {{ nivel_sel == 'admin' ? 'selected' : '' }}>Administrador</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph-bold ph-caret-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Situação -->
+                    <div>
+                        <label for="situacao_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Situação <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-activity text-lg"></i>
+                            </div>
+                            {% set sit_sel = old['situacao_id'] ?? usuario.situacao_id ?? 1 %}
+                            <select id="situacao_id" name="situacao_id" required
+                                class="w-full pl-10 pr-10 py-2.5 appearance-none bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
+                                {% for situacao in situacoes %}
+                                    <option value="{{ situacao.id }}" {{ sit_sel == situacao.id ? 'selected' : '' }}>
+                                        {{ situacao.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph-bold ph-caret-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Senhas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="senha" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            Senha {{ modo == 'Adicionar' ? '<span class="text-rose-500">*</span>' : '' }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-lock-key text-lg"></i>
+                            </div>
+                            <input type="password" id="senha" name="senha" {{ modo == 'Adicionar' ? 'required' : '' }} minlength="6"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="{{ modo == 'Editar' ? 'Deixe em branco para não alterar' : 'Mínimo 6 caracteres' }}">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="confirma_senha" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            Confirmar Senha {{ modo == 'Adicionar' ? '<span class="text-rose-500">*</span>' : '' }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-lock-key text-lg"></i>
+                            </div>
+                            <input type="password" id="confirma_senha" name="confirma_senha" {{ modo == 'Adicionar' ? 'required' : '' }} minlength="6"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Repita a senha">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="erroSenha" class="hidden text-rose-500 text-sm font-medium flex items-center gap-1">
+                    <i class="ph-fill ph-warning-circle"></i> As senhas não coincidem.
+                </div>
+
+                <!-- Botões -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100 dark:border-darkBorder mt-8">
+                    <a href="/usuarios" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-center">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primaryHover shadow-sm transition-colors flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i> {{ modo == 'Editar' ? 'Atualizar Alterações' : 'Salvar Usuário' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

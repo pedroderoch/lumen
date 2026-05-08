@@ -1,0 +1,83 @@
+{% extends "layout_auth.html.twig" %}
+
+{% block title %}Login - Lumen Fintech{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-darkBg">
+    <div class="max-w-md w-full">
+        <!-- Logo e Cabeçalho -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4 shadow-lg shadow-primary/20">
+                <i class="ph-fill ph-lightning text-3xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-800 dark:text-white">Bem-vindo de volta</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-2">Acesse sua conta para gerenciar o sistema</p>
+        </div>
+
+        <!-- Card de Login -->
+        <div class="bg-white dark:bg-darkCard p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            {# Mensagens de Erro (Ex: Senha incorreta ou Usuário não encontrado) #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm flex items-start gap-3">
+                    <i class="ph-fill ph-warning-circle text-lg mt-0.5"></i>
+                    <span>{{ session_get('errors')|first }}</span>
+                </div>
+            {% endif %}
+
+            {# Mensagem de Logout ou Sucesso #}
+            {% if session_has('success') %}
+                <div class="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-start gap-3">
+                    <i class="ph-fill ph-check-circle text-lg mt-0.5"></i>
+                    <span>{{ session_get('success') }}</span>
+                </div>
+            {% endif %}
+
+            <form action="/login" method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Campo de E-mail -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">E-mail Corporativo</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="ph ph-envelope-simple text-xl"></i>
+                        </div>
+                        <input type="email" id="email" name="email" required 
+                            class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                            placeholder="seu@email.com" value="{{ old['email'] ?? '' }}">
+                    </div>
+                </div>
+
+                <!-- Campo de Senha -->
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label for="senha" class="text-sm font-medium text-slate-700 dark:text-slate-300">Senha</label>
+                        <a href="#" class="text-sm font-semibold text-primary hover:text-primaryHover transition-colors">Esqueceu a senha?</a>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="ph ph-lock-key text-xl"></i>
+                        </div>
+                        <input type="password" id="senha" name="senha" required
+                            class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                            placeholder="••••••••">
+                    </div>
+                </div>
+
+                <!-- Botão de Entrar -->
+                <button type="submit" 
+                    class="w-full py-4 bg-primary hover:bg-primaryHover text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex justify-center items-center gap-2 group">
+                    <span>Entrar no Sistema</span>
+                    <i class="ph-bold ph-arrow-right transition-transform group-hover:translate-x-1"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Rodapé da Auth -->
+        <p class="text-center mt-8 text-sm text-slate-500 dark:text-slate-400">
+            &copy; 2026 Lumen Fintech. Todos os direitos reservados.
+        </p>
+    </div>
+</div>
+{% endblock %}

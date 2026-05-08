@@ -1,0 +1,151 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Meus Cartões de Crédito - Lumen Fintech{% endblock %}
+
+{% block page_title %}Cartões de Crédito{% endblock %}
+{% block page_subtitle %}Faça a gestão dos seus cartões e limites de crédito{% endblock %}
+
+{% block content %}
+    
+    <!-- HEADER DA PÁGINA -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <!-- Barra de Pesquisa -->
+        <div class="relative flex-1 max-w-md">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <i class="ph-bold ph-magnifying-glass text-lg"></i>
+            </div>
+            <input type="text" placeholder="Procurar por nome do cartão..." 
+                class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm">
+        </div>
+
+        <!-- Botão Novo Cartão -->
+        <div class="flex-shrink-0">
+            <a href="/cartoes/cadastrar" class="w-full sm:w-auto bg-primary hover:bg-primaryHover text-white px-6 py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-200 dark:shadow-none">
+                <i class="ph-bold ph-plus text-lg"></i>
+                Adicionar Cartão
+            </a>
+        </div>
+    </div>
+
+    {# Alertas de Sucesso/Erro #}
+    {% if session_has('success') %}
+        <div class="mb-8 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-2 font-medium shadow-sm">
+            <i class="ph-fill ph-check-circle text-lg"></i>
+            {{ session_get('success') }}
+        </div>
+    {% endif %}
+
+    {# Listagem de Cartões #}
+    {% if cartoes is empty %}
+        <!-- Empty State -->
+        <div class="bg-white dark:bg-darkCard rounded-3xl border border-slate-100 dark:border-darkBorder border-dashed p-12 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 bg-purple-50 dark:bg-purple-500/10 rounded-full flex items-center justify-center mb-4 text-purple-500 dark:text-purple-400">
+                <i class="ph-fill ph-credit-card text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Nenhum cartão adicionado</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Centralize os limites dos seus cartões de crédito aqui.</p>
+            <a href="/cartoes/cadastrar" class="px-6 py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl font-medium transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-plus"></i> Adicionar Primeiro Cartão
+            </a>
+        </div>
+    {% else %}
+        <!-- Grid de Cartões -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
+            {% for cartao in cartoes %}
+                
+                <!-- O Card Visual -->
+                <div class="rounded-[2rem] p-7 sm:p-8 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden group text-white h-56 flex flex-col justify-between" 
+                     style="background-color: {{ cartao.cor|default('#4f46e5') }}">
+                    
+                    <!-- Efeito de Fundo -->
+                    <i class="ph-fill ph-credit-card absolute -right-8 -bottom-8 text-9xl opacity-10 transform -rotate-12 group-hover:scale-110 transition-transform duration-500"></i>
+
+                    <div class="relative z-20 flex justify-between items-start pointer-events-none"> {# pointer-events-none aqui impede o card de bloquear o clique #}
+    
+                    <span class="font-bold text-xl tracking-widest uppercase drop-shadow-sm pointer-events-auto">
+                        {{ cartao.nome }}
+                    </span>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="relative dropdown-container z-50 pointer-events-auto"> {# Reativa o clique apenas aqui #}
+                        <button type="button" 
+                                onclick="toggleDropdown({{ cartao.id }}); event.stopPropagation();" 
+                                class="relative z-[60] text-white/80 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-xl p-2 transition-all cursor-pointer">
+                            <i class="ph-bold ph-dots-three-vertical text-xl"></i>
+                        </button>
+                        
+                        <div id="dropdown-{{ cartao.id }}" 
+                            class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-[70] overflow-hidden text-slate-800 dark:text-slate-200">
+                            
+                            <a href="/cartoes/extrato/{{ cartao.id }}" class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                <i class="ph ph-receipt text-lg text-primary dark:text-indigo-400"></i> 
+                                <span class="font-bold">Ver Extrato</span>
+                            </a>
+                            
+                            <a href="/cartoes/editar/{{ cartao.id }}" class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                <i class="ph ph-pencil-simple text-lg"></i> 
+                                <span>Editar Cartão</span>
+                            </a>
+
+                            <form action="/cartoes/excluir/{{ cartao.id }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este cartão?');" class="m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left">
+                                    <i class="ph ph-trash text-lg"></i>
+                                    <span>Excluir Cartão</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Detalhes do Cartão -->
+                    <div class="relative z-10 flex-1 flex flex-col justify-end">
+                        <div class="flex items-center gap-3 mb-3 opacity-90 drop-shadow-sm">
+                            <i class="ph-fill ph-sim-card text-3xl transform rotate-90 text-yellow-300/80"></i>
+                            <i class="ph-bold ph-contactless-payment text-2xl"></i>
+                        </div>
+                        
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-widest opacity-80 mb-0.5 drop-shadow-sm">Limite Total</p>
+                                <h3 class="text-2xl font-bold tracking-tight drop-shadow-sm">R$ {{ cartao.limite|number_format(2, ',', '.') }}</h3>
+                            </div>
+                            
+                            <div class="text-right flex gap-4">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-widest opacity-80 mb-0.5 drop-shadow-sm">Fecha</p>
+                                    <p class="font-semibold text-sm drop-shadow-sm">Dia {{ "%02d"|format(cartao.dia_fechamento) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-widest opacity-80 mb-0.5 drop-shadow-sm">Vence</p>
+                                    <p class="font-semibold text-sm drop-shadow-sm">Dia {{ "%02d"|format(cartao.dia_vencimento) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <script>
+        function toggleDropdown(id) {
+            // Fecha outros dropdowns abertos
+            document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+                if(el.id !== `dropdown-${id}`) el.classList.add('hidden');
+            });
+            
+            const dropdown = document.getElementById(`dropdown-${id}`);
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
+
+        // Fecha se clicar fora
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-container')) {
+                document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden'));
+            }
+        });
+    </script>
+{% endblock %}

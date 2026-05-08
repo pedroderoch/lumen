@@ -1,0 +1,152 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Extrato - {{ cartao.nome }}{% endblock %}
+
+{% block page_title %}Extrato do Cartão{% endblock %}
+{% block page_subtitle %}Consulta detalhada dos gastos da fatura{% endblock %}
+
+{% block content %}
+    <!-- CABEÇALHO E NAVEGAÇÃO -->
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+        <a href="/cartoes" class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-medium">
+            <i class="ph-bold ph-arrow-left"></i>
+            Voltar para Cartões
+        </a>
+
+        <!-- Seletor de Mês (Navegação da Fatura) -->
+        <div class="flex items-center bg-white dark:bg-darkCard p-2 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            <a href="/cartoes/extrato/{{ cartao.id }}?mes={{ mes_anterior }}&ano={{ ano_anterior }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <i class="ph-bold ph-caret-left"></i>
+            </a>
+            <div class="px-6 text-center min-w-[140px]">
+                <span class="text-sm font-bold text-slate-800 dark:text-white capitalize">{{ titulo_mes }}</span>
+            </div>
+            <a href="/cartoes/extrato/{{ cartao.id }}?mes={{ mes_proximo }}&ano={{ ano_proximo }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <i class="ph-bold ph-caret-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- CARDS DE RESUMO DO LIMITE -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Cartão Ativo -->
+        <div class="bg-white dark:bg-darkCard p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-darkBorder relative overflow-hidden group">
+            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-color: {{ cartao.cor }}"></div>
+            <div class="relative z-10">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Cartão Ativo</p>
+                <h2 class="text-2xl font-black" style="color: {{ cartao.cor }}">{{ cartao.nome }}</h2>
+                <div class="mt-4 flex items-center gap-3">
+                    <div class="w-10 h-7 bg-slate-100 dark:bg-slate-800 rounded-md flex items-center justify-center text-slate-400">
+                        <i class="ph-fill ph-sim-card text-xl text-amber-500/50"></i>
+                    </div>
+                    <i class="ph-bold ph-contactless-payment text-2xl text-slate-300"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total na Fatura -->
+        <div class="bg-white dark:bg-darkCard p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total nesta Fatura</p>
+                <h2 class="text-3xl font-black text-rose-500">R$ {{ total_gasto|number_format(2, ',', '.') }}</h2>
+            </div>
+            <div class="mt-4">
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    {% set percent = (cartao.limite > 0) ? (total_gasto / cartao.limite) * 100 : 0 %}
+                    <div class="h-full transition-all duration-1000 ease-out" style="width: {{ min(percent, 100) }}%; background-color: {{ cartao.cor }}"></div>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2 font-bold">{{ percent|number_format(1, ',', '.') }}% do limite utilizado</p>
+            </div>
+        </div>
+
+        <!-- Limite Disponível -->
+        <div class="bg-white dark:bg-darkCard p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Limite Disponível</p>
+                <h2 class="text-3xl font-black text-emerald-500">R$ {{ limite_disponivel|number_format(2, ',', '.') }}</h2>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium italic">De um limite total de R$ {{ cartao.limite|number_format(2, ',', '.') }}</p>
+        </div>
+    </div>
+
+    <!-- LISTAGEM DE MOVIMENTAÇÕES -->
+    <div class="bg-white dark:bg-darkCard rounded-[2rem] shadow-sm border border-slate-100 dark:border-darkBorder overflow-hidden mb-8">
+        <div class="p-6 border-b border-slate-50 dark:border-darkBorder flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 dark:text-white">Movimentações da Fatura</h3>
+            <div class="flex items-center gap-3">
+                <span class="hidden sm:inline px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {{ compras|length }} itens
+                </span>
+                <input type="text" id="filtroCompras" placeholder="Filtrar..." class="text-xs border border-slate-100 dark:border-darkBorder bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-1.5 outline-none focus:border-primary transition-all">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse whitespace-nowrap" id="tabelaCompras">
+                <thead>
+                    <tr class="bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-darkBorder">
+                        <th class="p-6 font-bold">Data</th>
+                        <th class="p-6 font-bold">Descrição / Favorecido</th>
+                        <th class="p-6 font-bold">Categoria</th>
+                        <th class="p-6 font-bold text-right">Valor</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50 dark:divide-darkBorder">
+                    {% for compra in compras %}
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                            <td class="p-6">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ compra.data_vencimento|date('d/m') }}</span>
+                                    <span class="text-[10px] text-slate-400">{{ compra.data_vencimento|date('Y') }}</span>
+                                </div>
+                            </td>
+                            <td class="p-6">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-slate-800 dark:text-white">{{ compra.descricao }}</span>
+                                    <span class="text-xs text-slate-400 font-medium">{{ compra.fornecedor.nome|default('Geral') }}</span>
+                                </div>
+                            </td>
+                            <td class="p-6">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-darkBorder">
+                                    <i class="ph-fill {{ compra.categoria.icone|default('ph-tag') }} text-xs" style="color: {{ compra.categoria.cor }}"></i>
+                                    <span class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">{{ compra.categoria.nome }}</span>
+                                </div>
+                            </td>
+                            <td class="p-6 text-right">
+                                <span class="text-base font-black text-slate-800 dark:text-white">
+                                    R$ {{ compra.valor|number_format(2, ',', '.') }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="p-20 text-center">
+                                <div class="flex flex-col items-center justify-center gap-4">
+                                    <div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300">
+                                        <i class="ph-fill ph-receipt-x text-3xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-lg font-bold text-slate-800 dark:text-white mb-1">Nenhum gasto registado</p>
+                                        <p class="text-sm text-slate-500">Não existem lançamentos para este cartão em {{ titulo_mes }}.</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Filtro rápido de tabela
+        document.getElementById('filtroCompras').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('#tabelaCompras tbody tr').forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lumen Fintech{% endblock %}</title>
+    
+    <!-- Fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#4f46e5', primaryHover: '#4338ca',
+                        darkBg: '#0f172a', darkCard: '#1e293b', darkBorder: '#334155',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- SCRIPT MOVIDO PARA O HEAD PARA EVITAR O PISCAR BRANCO (FOUC) -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        * { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 300ms; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 flex h-screen overflow-hidden antialiased transition-colors duration-300">
+
+    <!-- OVERLAY MOBILE -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden md:hidden transition-opacity opacity-0" onclick="toggleMobileMenu()"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-white dark:bg-darkCard border-r border-slate-100 dark:border-darkBorder flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        
+        <div class="h-20 flex items-center justify-between px-8 border-b border-slate-50 dark:border-darkBorder">
+            <div class="flex items-center gap-3 text-primary dark:text-indigo-400">
+                <i class="ph-fill ph-wallet text-3xl"></i>
+                <span class="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Lumen<span class="text-primary dark:text-indigo-400">.</span></span>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                <i class="ph ph-x text-2xl"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto hide-scroll">
+            <p class="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 mt-2">Menu Principal</p>
+            
+            {# Definição das classes para evitar repetição #}
+            {% set active_class = "bg-indigo-50 dark:bg-indigo-500/10 text-primary dark:text-indigo-400" %}
+            {% set inactive_class = "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white" %}
+
+            <a href="/" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path == '/' ? active_class : inactive_class }}">
+                <i class="{{ current_path == '/' ? 'ph-fill' : 'ph' }} ph-squares-four text-xl"></i>
+                Dashboard
+            </a>
+            <a href="/lancamentos" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/lancamentos' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/lancamentos' ? 'ph-fill' : 'ph' }} ph-list-dashes text-xl"></i>
+                Lançamentos
+            </a>
+            <a href="/caixinhas" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/caixinhas' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/caixinhas' ? 'ph-fill' : 'ph' }} ph-piggy-bank text-xl"></i>
+                Caixinhas
+            </a>
+            
+            <p class="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 mt-8">Cadastros Básicos</p>
+            
+            <a href="/fornecedores" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/fornecedores' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/fornecedores' ? 'ph-fill' : 'ph' }} ph-address-book text-xl"></i>
+                Fornecedores
+            </a>
+            <a href="/usuarios" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/usuarios' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/usuarios' ? 'ph-fill' : 'ph' }} ph-users text-xl"></i>
+                Usuários
+            </a>
+            <a href="/cartoes" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/cartoes' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/cartoes' ? 'ph-fill' : 'ph' }} ph-credit-card text-xl"></i>
+                Cartões de Crédito
+            </a>
+            <a href="/contas" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/contas' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/contas' ? 'ph-fill' : 'ph' }} ph-bank text-xl"></i>
+                Contas Bancárias
+            </a>
+            
+            <p class="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 mt-8">Configurações</p>
+            
+            <a href="/categorias" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/categorias' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/categorias' ? 'ph-fill' : 'ph' }} ph-tag text-xl"></i>
+                Categorias
+            </a>
+            <a href="/alertas" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/alertas' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/alertas' ? 'ph-fill' : 'ph' }} ph-warning text-xl"></i>
+                Alertas
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 dark:border-darkBorder">
+            <a href="/logout" class="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-2xl cursor-pointer transition-all group border border-transparent hover:border-rose-100 dark:hover:border-rose-500/20">
+                
+                <!-- Avatar com a variável global -->
+                <div class="w-10 h-10 rounded-xl flex-shrink-0 bg-primary/10 dark:bg-primary/20 text-primary dark:text-indigo-400 flex items-center justify-center font-bold text-sm group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                    {% if user_logado.nome %}
+                        {{ user_logado.nome|slice(0, 1)|upper }}
+                    {% else %}
+                        <i class="ph ph-user"></i>
+                    {% endif %}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {{ user_logado.nome|default('Usuário') }}
+                    </p>
+                    <div class="flex items-center gap-1 text-slate-500 dark:text-slate-400 group-hover:text-rose-600 transition-colors">
+                        <p class="text-xs truncate">Sair do sistema</p>
+                        <i class="ph ph-arrow-line-out text-xs opacity-0 group-hover:opacity-100 transition-all transform translate-x--2 group-hover:translate-x-0"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative w-full">
+        
+        <!-- TOP HEADER -->
+        <header class="h-20 bg-white/80 dark:bg-darkCard/80 backdrop-blur-md border-b border-slate-100 dark:border-darkBorder flex items-center justify-between px-4 sm:px-8 z-10 transition-colors duration-300">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-500 dark:text-slate-400 hover:text-primary transition">
+                    <i class="ph ph-list text-2xl"></i>
+                </button>
+                <div>
+                    <!-- Título Dinâmico -->
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{% block page_title %}Lumen{% endblock %}</h1>
+                    <!-- Subtítulo Dinâmico -->
+                    <div class="hidden sm:block text-sm text-slate-500 dark:text-slate-400">{% block page_subtitle %}{% endblock %}</div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button id="themeToggle" onclick="toggleTheme()" class="w-10 h-10 rounded-full border border-slate-200 dark:border-darkBorder flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm" title="Alternar Tema">
+                    <i id="themeIcon" class="ph ph-moon text-lg"></i>
+                </button>
+                <a href="/lancamentos/cadastrar" class="bg-primary hover:bg-primaryHover text-white px-3 sm:px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all shadow-sm shadow-indigo-200 dark:shadow-none border border-transparent dark:border-indigo-500/30">
+                    <i class="ph ph-plus-circle text-lg"></i>
+                    <span class="hidden sm:inline">Novo Lançamento</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- ÁREA DE CONTEÚDO ESPECÍFICO -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+            <div class="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SCRIPTS GLOBAIS -->
+    <script>
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.remove('ph-sun');
+                themeIcon.classList.add('ph-moon');
+            } else {
+                htmlTag.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.remove('ph-moon');
+                themeIcon.classList.add('ph-sun');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const themeIcon = document.getElementById('themeIcon');
+            if (document.documentElement.classList.contains('dark')) {
+                themeIcon.classList.remove('ph-moon');
+                themeIcon.classList.add('ph-sun');
+            } else {
+                themeIcon.classList.remove('ph-sun');
+                themeIcon.classList.add('ph-moon');
+            }
+        });
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+    </script>
+</body>
+</html>

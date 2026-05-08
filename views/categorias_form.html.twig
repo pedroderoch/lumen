@@ -1,0 +1,220 @@
+{% extends "layout.html.twig" %}
+
+{# Define se é modo edição ou cadastro baseado na existência do ID #}
+{% set modo = categoria.id ? 'Editar' : 'Adicionar' %}
+
+{% block title %}{{ modo }} Categoria - Lumen Fintech{% endblock %}
+
+{% block page_title %}Categorias{% endblock %}
+{% block page_subtitle %}{{ modo == 'Editar' ? 'Atualize os dados da categoria selecionada' : 'Crie uma nova categoria para classificar as suas transações' }}{% endblock %}
+
+{% block content %}
+    <div class="max-w-3xl mx-auto">
+        <!-- Card do Formulário -->
+        <div class="bg-white dark:bg-darkCard p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-darkBorder pb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
+                    <i class="ph-bold ph-tag text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Dados da Categoria</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        {{ modo == 'Editar' ? 'Altere as informações abaixo para atualizar a classificação.' : 'Preencha as informações para a nova classificação.' }}
+                    </p>
+                </div>
+            </div>
+
+            {# Alertas de Erro #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <i class="ph-fill ph-warning-circle text-lg"></i>
+                        <span>Verifique os erros abaixo:</span>
+                    </div>
+                    <ul class="list-disc list-inside ml-2">
+                        {% for erro in session_get('errors') %}
+                            <li>{{ erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form action="{{ modo == 'Editar' ? '/categorias/atualizar/' ~ categoria.id : '/categorias/criar' }}" method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Tipo de Categoria (Entrada / Saída) -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Tipo de Categoria <span class="text-rose-500">*</span></label>
+                    <div class="flex flex-wrap gap-4">
+                        {% set tipo_selecionado = old['tipo'] ?? categoria.tipo ?? 'saida' %}
+                        
+                        <!-- Opção Entrada -->
+                        <label class="relative flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 dark:has-[:checked]:bg-emerald-500/10">
+                            <input type="radio" name="tipo" value="entrada" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500" 
+                                   {{ tipo_selecionado == 'entrada' ? 'checked' : '' }} onchange="toggleNatureza()">
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="ph-bold ph-arrow-down-left text-emerald-500"></i> Receita / Entrada
+                            </span>
+                        </label>
+
+                        <!-- Opção Saída -->
+                        <label class="relative flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50 dark:has-[:checked]:bg-rose-500/10">
+                            <input type="radio" name="tipo" value="saida" class="w-4 h-4 text-rose-600 focus:ring-rose-500" 
+                                   {{ tipo_selecionado == 'saida' ? 'checked' : '' }} onchange="toggleNatureza()">
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="ph-bold ph-arrow-up-right text-rose-500"></i> Despesa / Saída
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Natureza do Gasto (Fixo / Variável) -->
+                <div id="bloco_natureza" class="hidden p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30">
+                    
+                    <div class="flex items-center gap-2 mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Natureza do Gasto <span class="text-rose-500">*</span></label>
+                        
+                        <div class="relative group inline-block">
+                            <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center cursor-help hover:bg-primary hover:text-white transition-colors">
+                                <i class="ph-bold ph-question text-xs"></i>
+                            </div>
+                            
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 md:w-96 p-4 bg-slate-800 dark:bg-slate-900 text-white text-xs rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
+                                <p class="mb-2 text-[11px] leading-relaxed">
+                                    <strong class="text-emerald-400 font-bold block mb-0.5">Natureza Fixa:</strong>
+                                    É aquilo que você tem que pagar todo mês para viver, independentemente se gastar muito ou pouco. Pode até variar um pouco o valor (como a conta de luz), mas a natureza da despesa é fixa. (Aluguel, Internet, Assinaturas).
+                                </p>
+                                <p class="text-[11px] leading-relaxed">
+                                    <strong class="text-rose-400 font-bold block mb-0.5">Natureza Variável:</strong>
+                                    É aquilo que você escolhe gastar e que varia muito conforme o seu estilo de vida no mês. Se apertar o cinto, você consegue cortar.
+                                    Ex: Supermercado, Padaria, Restaurantes/iFood, Lazer (Cinema), Combustível, Vestuário.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4">
+                        {% set natureza_selecionada = old['natureza'] ?? categoria.natureza ?? 'variavel' %}
+                        <!-- Fixo -->
+                        <label class="relative flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-darkCard hover:bg-slate-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:ring-1 has-[:checked]:ring-indigo-500">
+                            <input type="radio" name="natureza" value="fixo" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                                   {{ natureza_selecionada == 'fixo' ? 'checked' : '' }}>
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="ph-bold ph-push-pin text-indigo-500"></i> Fixo
+                            </span>
+                        </label>
+
+                        <!-- Variável -->
+                        <label class="relative flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer bg-white dark:bg-darkCard hover:bg-slate-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:ring-1 has-[:checked]:ring-indigo-500">
+                            <input type="radio" name="natureza" value="variavel" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                                   {{ natureza_selecionada == 'variavel' ? 'checked' : '' }}>
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="ph-bold ph-shuffle text-indigo-500"></i> Variável
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nome da Categoria -->
+                    <div class="md:col-span-2">
+                        <label for="nome" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome da Categoria <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-text-t text-lg"></i>
+                            </div>
+                            <input type="text" id="nome" name="nome" value="{{ old['nome'] ?? categoria.nome ?? '' }}" required
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Ex: Alimentação, Transporte, Salário...">
+                        </div>
+                    </div>
+
+                    <!-- Cor da Categoria -->
+                    <div>
+                        <label for="cor" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cor Principal <span class="text-rose-500">*</span></label>
+                        <div class="relative flex items-center gap-3">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-palette text-lg"></i>
+                            </div>
+                            <input type="color" id="cor" name="cor" value="{{ old['cor'] ?? categoria.cor ?? '#6c757d' }}" required oninput="atualizarPreview()"
+                                class="h-12 w-full pl-10 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer p-1 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Ícone da Categoria -->
+                    <div>
+                        <label for="icone" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Código do Ícone <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-star text-lg"></i>
+                            </div>
+                            <input type="text" id="icone" name="icone" value="{{ old['icone'] ?? categoria.icone ?? 'ph-tag' }}" required oninput="atualizarPreview()"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Use classes do <a href="https://phosphoricons.com/" target="_blank" class="text-primary dark:text-indigo-400 hover:underline">Phosphor Icons</a>.
+                        </p>
+                    </div>
+
+                    <!-- Preview Visual -->
+                    <div class="md:col-span-2 mt-2 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-darkBorder flex items-center gap-4">
+                        <div id="preview_bg" class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0 transition-colors" style="background-color: {{ old['cor'] ?? categoria.cor ?? '#6c757d' }}">
+                            <i id="preview_icon" class="ph-fill {{ old['icone'] ?? categoria.icone ?? 'ph-tag' }} text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 dark:text-white">Pré-visualização</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Assim aparecerá nas suas movimentações.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100 dark:border-darkBorder mt-8">
+                    <a href="/categorias" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors text-center inline-block">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primaryHover shadow-sm transition-colors flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i> {{ modo == 'Editar' ? 'Atualizar Categoria' : 'Salvar Categoria' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function atualizarPreview() {
+            const corInput = document.getElementById('cor').value;
+            let iconeInput = document.getElementById('icone').value.trim();
+            const previewBg = document.getElementById('preview_bg');
+            const previewIcon = document.getElementById('preview_icon');
+            
+            if (iconeInput !== '' && !iconeInput.startsWith('ph-')) {
+                iconeInput = 'ph-' + iconeInput;
+            } else if (iconeInput === '') {
+                iconeInput = 'ph-tag';
+            }
+            
+            previewBg.style.backgroundColor = corInput;
+            previewIcon.className = 'ph-fill text-2xl transition-all ' + iconeInput;
+        }
+
+        function toggleNatureza() {
+            const tipoSaida = document.querySelector('input[name="tipo"][value="saida"]').checked;
+            const bloco = document.getElementById('bloco_natureza');
+            
+            if(tipoSaida) {
+                bloco.classList.remove('hidden');
+            } else {
+                bloco.classList.add('hidden');
+                // Se for entrada, garante que salve como variavel por padrão no banco
+                document.querySelector('input[name="natureza"][value="variavel"]').checked = true;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            atualizarPreview();
+            toggleNatureza();
+        });
+    </script>
+{% endblock %}

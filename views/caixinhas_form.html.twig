@@ -1,0 +1,102 @@
+{% extends "layout.html.twig" %}
+
+{# Define se é modo edição ou cadastro baseado na existência do ID #}
+{% set modo = caixinha.id ? 'Editar' : 'Adicionar' %}
+
+{% block title %}{{ modo }} Caixinha - Lumen Fintech{% endblock %}
+
+{% block page_title %}Caixinhas{% endblock %}
+{% block page_subtitle %}{{ modo == 'Editar' ? 'Atualizar dados da Caixinha' : 'Adicionar uma nova Caixinha' }}{% endblock %}
+
+{% block content %}
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white dark:bg-darkCard p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-darkBorder pb-4">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center">
+                    <i class="ph-bold {{ caixinha.id ? 'ph-pencil-line' : 'ph-piggy-bank' }} text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">{{ caixinha.id ? 'Editar Objetivo' : 'Dados do Objetivo' }}</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Defina o nome, a meta e quando deseja alcançar.</p>
+                </div>
+            </div>
+
+            {# Alertas de Erro #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+                    <ul class="list-disc list-inside">
+                        {% for erro in session_get('errors') %}
+                            <li>{{ erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {# Lógica simples de Action: Se tem ID, vai para update, senão para criar #}
+            {# <form action="{{ caixinha.id ? '/caixinhas/update/' ~ caixinha.id : '/caixinhas/criar' }}" method="POST" class="space-y-6"> #}
+            <form action="{{ modo == 'Editar' ? '/caixinhas/atualizar/' ~ caixinha.id : '/caixinhas/criar' }}" 
+                  method="POST" id="formCaixinha" class="space-y-6" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {# Nome #}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome da Caixinha</label>
+                        <input type="text" name="nome" placeholder="Ex: Viagem para Natal, Reserva de Emergência..." value="{{ caixinha.nome ?? old['nome'] ?? '' }}" required
+                            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-primary transition-all">
+                    </div>
+
+                    {# Descrição #}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição</label>
+                        <input type="text" name="descricao" placeholder="Para que servirá este dinheiro? Rende 100% do CDI" value="{{ caixinha.descricao ?? old['descricao'] ?? '' }}"
+                            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-primary transition-all">
+                    </div>
+
+                    {# Valor Meta #}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Meta (R$)</label>
+                        <input type="text" name="valor_meta" placeholder="0,00" value="{{ caixinha.valor_meta ? caixinha.valor_meta|number_format(2, ',', '.') : old['valor_meta'] ?? '' }}" required
+                            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-primary transition-all money-mask">
+                    </div>
+
+                    {# Valor Atual #}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Saldo Atual (R$)</label>
+                        <input type="text" name="valor_atual" value="{{ caixinha.valor_atual ? caixinha.valor_atual|number_format(2, ',', '.') : old['valor_atual'] ?? '0,00' }}"
+                            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-primary transition-all money-mask">
+                    </div>
+
+                    {# Data Limite #}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data Limite</label>
+                        <input type="date" name="data_limite" value="{{ caixinha.data_limite ?? old['data_limite'] ?? '' }}"
+                            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-primary transition-all">
+                    </div>
+
+                    {# Cor #}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cor</label>
+                        <input type="color" name="cor" value="{{ caixinha.cor ?? old['cor'] ?? '#8A05BE' }}" required
+                            class="h-11 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer p-1">
+                    </div>
+
+                </div>
+
+                <!-- Botões -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100 dark:border-darkBorder mt-8">
+                    <a href="/caixinhas" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-center">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primaryHover shadow-sm transition-colors flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i>
+
+						{{ modo == 'Editar' ? 'Atualizar Caixinha' : 'Salvar Caixinha' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

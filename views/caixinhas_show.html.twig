@@ -1,0 +1,118 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Detalhes da Caixinha - Lumen Fintech{% endblock %}
+
+{% block page_title %}{{ caixinha.nome }}{% endblock %}
+{% block page_subtitle %}Histórico de poupança e detalhes do objetivo{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- COLUNA DA ESQUERDA: RESUMO DA CAIXINHA -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white dark:bg-darkCard rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-darkBorder relative overflow-hidden">
+            <!-- Faixa de Cor -->
+            <div class="absolute top-0 left-0 w-full h-1.5" style="background-color: {{ caixinha.cor }}"></div>
+
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg" style="background-color: {{ caixinha.cor }}">
+                    <i class="ph-fill ph-piggy-bank text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 dark:text-white">{{ caixinha.nome }}</h3>
+                    <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Objetivo Ativo</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="text-sm text-slate-500 mb-1">Total Guardado</p>
+                    <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">R$ {{ caixinha.valor_atual|number_format(2, ',', '.') }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-slate-500 mb-1">Meta Final</p>
+                    <p class="text-lg font-bold text-slate-700 dark:text-slate-200">R$ {{ caixinha.valor_meta|number_format(2, ',', '.') }}</p>
+                </div>
+
+                <!-- Barra de Progresso Grande -->
+                <div class="pt-2">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Progresso</span>
+                        <span class="text-sm font-black" style="color: {{ caixinha.cor }}">{{ caixinha.porcentagem }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
+                        <div class="h-3 rounded-full transition-all duration-1000" 
+                             style="width: {{ caixinha.porcentagem > 100 ? 100 : caixinha.porcentagem }}%; background-color: {{ caixinha.cor }}"></div>
+                    </div>
+                </div>
+
+                {% if caixinha.data_limite and caixinha.data_limite != '0000-00-00' %}
+                <div class="pt-4 border-t border-slate-50 dark:border-darkBorder flex items-center gap-3">
+                    {# ... ícone e labels ... #}
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ caixinha.data_limite|date('d/m/Y') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="/caixinhas" class="flex items-center justify-center gap-2 w-full py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-2xl font-medium transition-all">
+            <i class="ph ph-arrow-left"></i> Voltar para Caixinhas
+        </a>
+    </div>
+
+    <!-- COLUNA DA DIREITA: EXTRATO (TIMELINE) -->
+    <div class="lg:col-span-2">
+        <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder overflow-hidden">
+            <div class="p-6 border-b border-slate-50 dark:border-darkBorder flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i class="ph-bold ph-list-numbers text-primary"></i>
+                    Histórico de Movimentações
+                </h3>
+                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-bold text-slate-500 uppercase">
+                    {{ caixinha.movimentacoes|length }} Lançamentos
+                </span>
+            </div>
+
+            <div class="p-6">
+                <div class="relative">
+                    {# Linha vertical da Timeline #}
+                    <div class="absolute left-[19px] top-0 bottom-0 w-0.5 bg-slate-100 dark:bg-slate-800"></div>
+
+                    <div class="space-y-8 relative">
+                        {% for mov in caixinha.movimentacoes %}
+                            <div class="flex items-start gap-4">
+                                {# Indicador Circular #}
+                                <div class="relative z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-sm border-4 border-white dark:border-darkCard {{ mov.tipo == 'entrada' ? 'bg-emerald-500' : 'bg-rose-500' }} text-white">
+                                    <i class="ph-bold {{ mov.tipo == 'entrada' ? 'ph-arrow-up-right' : 'ph-arrow-down-left' }}"></i>
+                                </div>
+                                
+                                <div class="flex-1 pt-1">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-800 dark:text-white">{{ mov.observacao }}</p>
+                                            <p class="text-xs text-slate-400">{{ mov.created_at|date('d/m/Y') }} às {{ mov.created_at|date('H:i') }}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-black {{ mov.tipo == 'entrada' ? 'text-emerald-600' : 'text-rose-600' }}">
+                                                {{ mov.tipo == 'entrada' ? '+' : '-' }} R$ {{ mov.valor|number_format(2, ',', '.') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="py-12 flex flex-col items-center justify-center text-center">
+                                <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                                    <i class="ph ph-sneaker-move text-3xl"></i>
+                                </div>
+                                <p class="text-slate-500 dark:text-slate-400">Nenhuma movimentação para exibir.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

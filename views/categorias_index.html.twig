@@ -1,0 +1,159 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Categorias - Lumen Fintech{% endblock %}
+
+{% block page_title %}Categorias{% endblock %}
+{% block page_subtitle %}Organize os seus lançamentos por tipo e cor{% endblock %}
+
+{% block content %}
+    
+    <!-- HEADER DA PÁGINA -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <!-- Barra de Pesquisa -->
+        <div class="relative flex-1 max-w-md">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <i class="ph-bold ph-magnifying-glass text-lg"></i>
+            </div>
+            <input type="text" placeholder="Procurar categoria..." 
+                class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm">
+        </div>
+
+        <!-- Botão Nova Categoria -->
+        <div class="flex-shrink-0">
+            <a href="/categorias/cadastrar" class="w-full sm:w-auto bg-primary hover:bg-primaryHover text-white px-6 py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-200 dark:shadow-none">
+                <i class="ph-bold ph-plus text-lg"></i>
+                Nova Categoria
+            </a>
+        </div>
+    </div>
+
+    {# Alertas de Sucesso/Erro #}
+    {% if session_has('success') %}
+        <div class="mb-8 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-2 font-medium shadow-sm">
+            <i class="ph-fill ph-check-circle text-lg"></i>
+            {{ session_get('success') }}
+        </div>
+    {% endif %}
+
+    {% if session_has('errors') %}
+        <div class="mb-8 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm flex items-center gap-2 font-medium shadow-sm">
+            <i class="ph-fill ph-warning-circle text-lg"></i>
+            {{ session_get('errors')[0] }}
+        </div>
+    {% endif %}
+
+    {# Listagem de Categorias #}
+    {% if categorias is empty %}
+        <!-- Empty State -->
+        <div class="bg-white dark:bg-darkCard rounded-3xl border border-slate-100 dark:border-darkBorder border-dashed p-12 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-400 dark:text-slate-500">
+                <i class="ph-fill ph-tag text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Nenhuma categoria encontrada</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Crie categorias para organizar melhor as suas receitas e despesas.</p>
+            <a href="/categorias/cadastrar" class="px-6 py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl font-medium transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-plus"></i> Criar Primeira Categoria
+            </a>
+        </div>
+    {% else %}
+        <!-- Grid de Categorias (Mais compacto: 4 colunas em ecrãs grandes) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            {% for categoria in categorias %}
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center gap-4 hover:shadow-md transition-shadow relative group">
+                    
+                    <!-- Ícone com a cor escolhida -->
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl shadow-sm flex-shrink-0" style="background-color: {{ categoria.cor|default('#6c757d') }}">
+                        <i class="ph-fill {{ categoria.icone|default('ph-tag') }}"></i>
+                    </div>
+                    
+                    <!-- Informações da Categoria -->
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-slate-800 dark:text-white truncate text-base leading-tight">{{ categoria.nome }}</h3>
+                        
+                        <!-- Badge Dinâmico: Verde para Entrada, Vermelho para Saída -->
+                        {% if categoria.tipo == 'entrada' %}
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                                <i class="ph-bold ph-arrow-down-left"></i> Entrada
+                            </span>
+                        {% else %}
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-0.5">
+                                <i class="ph-bold ph-arrow-up-right"></i> Saída
+                            </span>
+                        {% endif %}
+
+                         <!-- Badge Dinâmico: Verde para Fixo, Vermelho para Variável -->
+                        {% if categoria.natureza == 'fixo' %}
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                                <i class="ph-bold ph-arrows-in"></i> Fixo
+                            </span>
+                        {% else %}
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-0.5">
+                                <i class="ph-bold ph-arrows-in-line-vertical"></i> Variável
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Dropdown Menu de Opções -->
+                    <div class="relative dropdown-container">
+                        <button onclick="toggleDropdown({{ categoria.id }})" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <i class="ph-bold ph-dots-three-vertical text-xl"></i>
+                        </button>
+                        
+                        <div id="dropdown-{{ categoria.id }}" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 z-20 overflow-hidden">
+                            <a href="/categorias/editar/{{ categoria.id }}" class="flex items-center gap-2 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                <i class="ph ph-pencil-simple"></i> Editar
+                            </a>
+                            <form action="/categorias/excluir/{{ categoria.id }}" method="POST" onsubmit="return confirm('Tem a certeza? Excluir esta categoria pode afetar os lançamentos a ela associados.');" class="m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left">
+                                    <i class="ph ph-trash"></i> Excluir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {% set total_pages = total_pages|default(1) %}
+        {% set current_page = current_page|default(1) %}
+        
+        {% if total_pages > 1 %}
+        <div class="flex justify-center w-full mt-4 pb-4">
+            <nav class="flex items-center gap-1 bg-white dark:bg-darkCard p-1.5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder">
+                <a href="?page={{ current_page - 1 }}" class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if current_page <= 1 %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}">
+                    <i class="ph-bold ph-caret-left text-lg"></i>
+                </a>
+                <div class="flex items-center gap-1 px-2">
+                    {% for page in 1..total_pages %}
+                        <a href="?page={{ page }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all {% if page == current_page %} bg-primary text-white shadow-sm shadow-indigo-200 dark:shadow-none {% else %} text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 {% endif %}">
+                            {{ page }}
+                        </a>
+                    {% endfor %}
+                </div>
+                <a href="?page={{ current_page + 1 }}" class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if current_page >= total_pages %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}">
+                    <i class="ph-bold ph-caret-right text-lg"></i>
+                </a>
+            </nav>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- SCRIPTS DE INTERAÇÃO -->
+    <script>
+        function toggleDropdown(id) {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+                if(el.id !== `dropdown-${id}`) el.classList.add('hidden');
+            });
+            const dropdown = document.getElementById(`dropdown-${id}`);
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-container')) {
+                document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden'));
+            }
+        });
+    </script>
+{% endblock %}

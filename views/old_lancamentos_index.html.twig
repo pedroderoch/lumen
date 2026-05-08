@@ -1,0 +1,346 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Lançamentos Financeiros - Lumen Fintech{% endblock %}
+
+{% block page_title %}Lançamentos{% endblock %}
+{% block page_subtitle %}Controle o seu fluxo de caixa detalhado{% endblock %}
+
+{% block content %}
+
+    <!-- NAVEGAÇÃO DE MÊS -->
+    <div class="flex items-center justify-between bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder mb-6 max-w-2xl mx-auto">
+        <a href="/lancamentos{{ link_anterior }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <i class="ph-bold ph-caret-left text-xl"></i>
+        </a>
+        
+        <div class="text-center px-4">
+            <h3 class="text-lg sm:text-xl font-bold text-primary dark:text-indigo-400 capitalize m-0">{{ titulo_mes|default('Mês Atual') }}</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Extrato Mensal</p>
+        </div>
+
+        <a href="/lancamentos{{ link_proximo }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <i class="ph-bold ph-caret-right text-xl"></i>
+        </a>
+    </div>
+
+    <!-- CARDS DE RESUMO -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <!-- Receitas -->
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between relative overflow-hidden group">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total Receitas</p>
+                <h3 class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">R$ {{ total_receitas|default(0)|number_format(2, ',', '.') }}</h3>
+            </div>
+            <div class="relative z-10 w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center">
+                <i class="ph-bold ph-arrow-down-left text-2xl"></i>
+            </div>
+            <i class="ph-fill ph-trend-up absolute -right-4 -bottom-4 text-7xl opacity-5 text-emerald-500 group-hover:opacity-10 transition-opacity"></i>
+        </div>
+
+        <!-- Despesas -->
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between relative overflow-hidden group">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total Despesas</p>
+                <h3 class="text-2xl sm:text-3xl font-bold text-rose-600 dark:text-rose-400">R$ {{ total_despesas|default(0)|number_format(2, ',', '.') }}</h3>
+            </div>
+            <div class="relative z-10 w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 flex items-center justify-center">
+                <i class="ph-bold ph-arrow-up-right text-2xl"></i>
+            </div>
+            <i class="ph-fill ph-trend-down absolute -right-4 -bottom-4 text-7xl opacity-5 text-rose-500 group-hover:opacity-10 transition-opacity"></i>
+        </div>
+
+        <!-- Saldo -->
+        {% set saldo = saldo_mensal|default(0) %}
+        {% set cor_saldo = saldo >= 0 ? 'text-primary dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400' %}
+        {% set bg_icone = saldo >= 0 ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'bg-rose-50 dark:bg-rose-500/10' %}
+        {% set icone_saldo = saldo >= 0 ? 'ph-wallet' : 'ph-warning-circle' %}
+
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between relative overflow-hidden group">
+            <div class="relative z-10">
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Saldo do Mês</p>
+                <h3 class="text-2xl sm:text-3xl font-bold {{ cor_saldo }}">R$ {{ saldo|number_format(2, ',', '.') }}</h3>
+            </div>
+            <div class="relative z-10 w-12 h-12 rounded-2xl {{ bg_icone }} {{ cor_saldo }} flex items-center justify-center">
+                <i class="ph-bold {{ icone_saldo }} text-2xl"></i>
+            </div>
+            <i class="ph-fill ph-scales absolute -right-4 -bottom-4 text-7xl opacity-5 {{ cor_saldo }} group-hover:opacity-10 transition-opacity"></i>
+        </div>
+    </div>
+
+    <!-- TOOLBAR (Pesquisa e Botões) -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div class="flex flex-col sm:flex-row gap-3 flex-1">
+            <!-- Barra de Pesquisa -->
+            <div class="relative flex-1 max-w-md">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <i class="ph-bold ph-magnifying-glass text-lg"></i>
+                </div>
+                <input type="text" placeholder="Pesquisar lançamentos..." 
+                    class="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm text-sm">
+            </div>
+
+            <!-- Botão Exportar -->
+            <div class="relative dropdown-container">
+                <button onclick="toggleExport()" class="w-full sm:w-auto px-4 py-2.5 bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm">
+                    <i class="ph-bold ph-download-simple text-lg"></i> Exportar
+                </button>
+                <div id="dropdown-export" class="hidden absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 z-20 overflow-hidden">
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"><i class="ph-fill ph-file-csv text-emerald-600 text-lg"></i> Planilha Excel</a>
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"><i class="ph-fill ph-file-pdf text-rose-600 text-lg"></i> Documento PDF</a>
+                    <a href="#" onclick="window.print()" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"><i class="ph-fill ph-printer text-slate-600 text-lg"></i> Imprimir</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-shrink-0">
+            <a href="/lancamentos/novo" class="w-full md:w-auto bg-primary hover:bg-primaryHover text-white px-6 py-2.5 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-200 dark:shadow-none text-sm">
+                <i class="ph-bold ph-plus text-lg"></i> Novo Lançamento
+            </a>
+        </div>
+    </div>
+
+    <!-- TABELA DE LANÇAMENTOS -->
+    <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder overflow-hidden mb-8">
+        {% if lancamentos is empty %}
+            <div class="p-12 flex flex-col items-center justify-center text-center">
+                <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-400 dark:text-slate-500">
+                    <i class="ph-fill ph-receipt text-4xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Nenhum lançamento no mês</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Não foram encontrados registos para o período selecionado.</p>
+                <a href="/lancamentos/novo" class="px-6 py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl font-medium transition-colors flex items-center gap-2 text-sm">
+                    <i class="ph-bold ph-plus"></i> Cadastrar Lançamento
+                </a>
+            </div>
+        {% else %}
+            <!-- O overflow-x-auto garante que se faltar espaço, ele cria rolagem apenas dentro da tabela, sem quebrar a página -->
+            <div class="overflow-x-auto w-full hide-scroll">
+                <table class="w-full text-left border-collapse whitespace-nowrap min-w-full">
+                    <thead>
+                        <tr class="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder select-none">
+                            <th class="px-4 py-4 font-semibold rounded-tl-3xl">
+                                <a href="?sort=descricao" class="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors w-max">
+                                    Descrição <i class="ph-bold ph-caret-up-down text-slate-300 dark:text-slate-600 text-sm"></i>
+                                </a>
+                            </th>
+                            <!-- Oculto em telas menores que LG -->
+                            <th class="px-3 py-4 font-semibold hidden lg:table-cell">
+                                <a href="?sort=fornecedor" class="flex items-center gap-1.5 hover:text-slate-700 transition-colors w-max">
+                                    Fornecedor <i class="ph-bold ph-caret-up-down text-slate-300 text-sm"></i>
+                                </a>
+                            </th>
+                            <!-- Oculto em telas menores que MD -->
+                            <th class="px-3 py-4 font-semibold hidden md:table-cell">
+                                <a href="?sort=categoria" class="flex items-center gap-1.5 hover:text-slate-700 transition-colors w-max">
+                                    Categoria <i class="ph-bold ph-caret-up-down text-slate-300 text-sm"></i>
+                                </a>
+                            </th>
+                            <th class="px-3 py-4 font-semibold">
+                                <a href="?sort=valor" class="flex items-center justify-end gap-1.5 hover:text-slate-700 transition-colors w-full">
+                                    Valor <i class="ph-bold ph-caret-up-down text-slate-300 text-sm"></i>
+                                </a>
+                            </th>
+                            <th class="px-3 py-4 font-semibold">
+                                <a href="?sort=data_vencimento" class="flex items-center justify-center gap-1.5 hover:text-slate-700 transition-colors w-full">
+                                    Venc. <i class="ph-bold ph-caret-up-down text-slate-300 text-sm"></i>
+                                </a>
+                            </th>
+                            <!-- Oculto em telas menores que XL -->
+                            <th class="px-3 py-4 font-semibold hidden xl:table-cell">
+                                <a href="?sort=valor_pago" class="flex items-center justify-end gap-1.5 hover:text-slate-700 transition-colors w-full">
+                                    V. Pago <i class="ph-bold ph-caret-up-down text-slate-300 text-sm"></i>
+                                </a>
+                            </th>
+                            <!-- Oculto em telas menores que XL -->
+                            <th class="px-3 py-4 font-semibold hidden xl:table-cell">
+                                <a href="?sort=data_pagamento" class="flex items-center justify-center gap-1.5 hover:text-slate-700 transition-colors w-full">
+                                    Dt. Pagto <i class="ph-bold ph-caret-up-down text-slate-300 text-sm"></i>
+                                </a>
+                            </th>
+                            <th class="px-3 py-4 font-semibold text-center">Status</th>
+                            <!-- Oculto em telas menores que MD -->
+                            <th class="px-3 py-4 font-semibold text-center hidden md:table-cell" title="Forma de Pagamento">Forma</th>
+                            <th class="px-4 py-4 font-semibold text-right rounded-tr-3xl">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-darkBorder">
+                        {% for lancamento in lancamentos %}
+                            {% set is_entrada = (lancamento.tipo == 'receita' or lancamento.tipo == 'entrada') %}
+                            {% set cor_valor = is_entrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' %}
+                            
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                                
+                                <!-- Descrição -->
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 text-sm">{{ lancamento.descricao }}</span>
+                                        {% if lancamento.total_parcelas %}
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                                                {{ lancamento.parcela_atual }}/{{ lancamento.total_parcelas }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <!-- No mobile, mostra a categoria embutida debaixo do nome para não perder a informação -->
+                                    <div class="block md:hidden mt-1">
+                                         {% if lancamento.categoria %}
+                                            <span class="text-[10px] font-medium flex items-center gap-1" style="color: {{ lancamento.categoria.cor|default('inherit') }}">
+                                                <i class="ph-fill {{ lancamento.categoria.icone|default('ph-tag') }}"></i> {{ lancamento.categoria.nome }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                
+                                <!-- Fornecedor (Oculto < LG) -->
+                                <td class="px-3 py-3 hidden lg:table-cell">
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <i class="ph-fill ph-buildings text-slate-400"></i>
+                                        <span class="text-slate-600 dark:text-slate-300 truncate max-w-[120px]" title="{{ lancamento.fornecedor.nome|default('N/A') }}">{{ lancamento.fornecedor.nome ?? '<span class="text-slate-400 italic">N/A</span>'|raw }}</span>
+                                    </div>
+                                </td>
+
+                                <!-- Categoria (Oculto < MD) -->
+                                <td class="px-3 py-3 hidden md:table-cell">
+                                    {% if lancamento.categoria %}
+                                        <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 flex items-center gap-1 w-max">
+                                            <i class="ph-fill {{ lancamento.categoria.icone|default('ph-tag') }}" style="color: {{ lancamento.categoria.cor|default('inherit') }}"></i>
+                                            {{ lancamento.categoria.nome }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-slate-400 italic text-xs">N/A</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Valor -->
+                                <td class="px-3 py-3 text-right">
+                                    <span class="font-bold {{ cor_valor }} text-sm whitespace-nowrap">
+                                        R$ {{ lancamento.valor|number_format(2, ',', '.') }}
+                                    </span>
+                                </td>
+
+                                <!-- Vencimento -->
+                                <td class="px-3 py-3 text-center text-sm font-medium text-slate-600 dark:text-slate-300">
+                                    {{ lancamento.data_vencimento|date('d/m') }}
+                                </td>
+
+                                <!-- Valor Pago (Oculto < XL) -->
+                                <td class="px-3 py-3 text-right text-sm text-slate-500 hidden xl:table-cell">
+                                    {% if lancamento.valor_pago %}
+                                        R$ {{ lancamento.valor_pago|number_format(2, ',', '.') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <!-- Data Pagamento (Oculto < XL) -->
+                                <td class="px-3 py-3 text-center text-sm text-slate-500 hidden xl:table-cell">
+                                    {% if lancamento.data_pagamento %}
+                                        {{ lancamento.data_pagamento|date('d/m/Y') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <!-- Status -->
+                                <td class="px-3 py-3 text-center">
+                                    {% if lancamento.status == 'pago' %}
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200">
+                                            <i class="ph-bold ph-check"></i> Pago
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-200">
+                                            <i class="ph-bold ph-clock"></i> Pend.
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Forma de Pagamento (Oculto < MD) -->
+                                <td class="px-3 py-3 hidden md:table-cell">
+                                    <div class="flex justify-center items-center">
+                                        {% set forma = lancamento.forma_pagamento|lower %}
+                                        
+                                        {% if 'cartão' in forma or 'cartao' in forma %}
+                                            <div class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center cursor-help" title="{{ lancamento.forma_pagamento }}">
+                                                <i class="ph-fill ph-credit-card text-lg"></i>
+                                            </div>
+                                        {% elseif 'pix' in forma %}
+                                            <div class="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center cursor-help" title="{{ lancamento.forma_pagamento }}">
+                                                <i class="ph-fill ph-currency-circle-dollar text-lg"></i>
+                                            </div>
+                                        {% elseif 'dinheiro' in forma or 'espécie' in forma %}
+                                            <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center cursor-help" title="{{ lancamento.forma_pagamento }}">
+                                                <i class="ph-fill ph-money text-lg"></i>
+                                            </div>
+                                        {% elseif 'boleto' in forma %}
+                                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center cursor-help" title="{{ lancamento.forma_pagamento }}">
+                                                <i class="ph-fill ph-barcode text-lg"></i>
+                                            </div>
+                                        {% elseif 'transferência' in forma or 'ted' in forma or 'doc' in forma %}
+                                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center cursor-help" title="{{ lancamento.forma_pagamento }}">
+                                                <i class="ph-bold ph-arrows-left-right text-lg"></i>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-xs font-medium text-slate-500" title="{{ lancamento.forma_pagamento }}">{{ lancamento.forma_pagamento|default('-') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <!-- Ações -->
+                                <td class="px-4 py-3 text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <a href="/lancamentos/editar/{{ lancamento.id }}" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-indigo-50 transition-colors" title="Editar">
+                                            <i class="ph-bold ph-pencil-simple text-lg"></i>
+                                        </a>
+                                        <form action="/lancamentos/excluir/{{ lancamento.id }}" method="POST" class="m-0 inline-block">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
+                                            <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este lançamento?');" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors" title="Excluir">
+                                                <i class="ph-bold ph-trash text-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginação -->
+    {% set total_pages = total_pages|default(1) %}
+    {% set current_page = current_page|default(1) %}
+    
+    {% if total_pages > 1 %}
+    <div class="flex justify-center w-full pb-4">
+        <nav class="flex items-center gap-1 bg-white dark:bg-darkCard p-1.5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            <a href="?page={{ current_page - 1 }}" class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if current_page <= 1 %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}">
+                <i class="ph-bold ph-caret-left text-lg"></i>
+            </a>
+            <div class="flex items-center gap-1 px-2">
+                {% for page in 1..total_pages %}
+                    <a href="?page={{ page }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all {% if page == current_page %} bg-primary text-white shadow-sm shadow-indigo-200 dark:shadow-none {% else %} text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 {% endif %}">
+                        {{ page }}
+                    </a>
+                {% endfor %}
+            </div>
+            <a href="?page={{ current_page + 1 }}" class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if current_page >= total_pages %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}">
+                <i class="ph-bold ph-caret-right text-lg"></i>
+            </a>
+        </nav>
+    </div>
+    {% endif %}
+
+    <script>
+        function toggleExport() {
+            const dropdown = document.getElementById('dropdown-export');
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-container')) {
+                const dropdown = document.getElementById('dropdown-export');
+                if(dropdown) dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Fornecedores e Clientes - Lumen Fintech{% endblock %}
+
+{% block page_title %}Fornecedores e Clientes{% endblock %}
+{% block page_subtitle %}Faça a gestão da sua carteira de contactos comerciais{% endblock %}
+
+{% block content %}
+    
+    <!-- HEADER DA PÁGINA -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <!-- Barra de Pesquisa (Visual) -->
+        {# <div class="relative flex-1 max-w-md">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <i class="ph-bold ph-magnifying-glass text-lg"></i>
+            </div>
+            <input type="text" placeholder="Procurar por nome, CPF ou CNPJ..." 
+                class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm">
+        </div> #}
+        <!-- Barra de Pesquisa (Agora dentro de um Form GET) -->
+        <form action="/fornecedores" method="GET" class="relative flex-1 max-w-md">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <i class="ph-bold ph-magnifying-glass text-lg"></i>
+            </div>
+            <input type="text" name="search" id="inputPesquisa" value="{{ search }}" placeholder="Procurar por nome, CPF ou CNPJ..." 
+                class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkCard border border-slate-100 dark:border-darkBorder rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm">
+        </form>
+
+        <!-- Botão Novo Registo -->
+        <div class="flex-shrink-0">
+            <a href="/fornecedores/cadastrar" class="w-full sm:w-auto bg-primary hover:bg-primaryHover text-white px-6 py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-200 dark:shadow-none">
+                <i class="ph-bold ph-plus text-lg"></i>
+                Novo Registro
+            </a>
+        </div>
+    </div>
+
+    {# Alertas de Sucesso/Erro #}
+    {% if session_has('success') %}
+        <div class="mb-8 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-2 font-medium shadow-sm">
+            <i class="ph-fill ph-check-circle text-lg"></i>
+            {{ session_get('success') }}
+        </div>
+    {% endif %}
+
+    {% if session_has('errors') %}
+        <div class="mb-8 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm flex items-center gap-2 font-medium shadow-sm">
+            <i class="ph-fill ph-warning-circle text-lg"></i>
+            {{ session_get('errors')[0] }}
+        </div>
+    {% endif %}
+
+    {# Listagem de Contactos #}
+    {% if fornecedores is empty %}
+        <!-- Empty State -->
+        <div class="bg-white dark:bg-darkCard rounded-3xl border border-slate-100 dark:border-darkBorder border-dashed p-12 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 bg-orange-50 dark:bg-orange-500/10 rounded-full flex items-center justify-center mb-4 text-orange-500 dark:text-orange-400">
+                <i class="ph-fill ph-address-book text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Nenhum registo encontrado</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Ainda não tem fornecedores ou clientes cadastrados no sistema.</p>
+            <a href="/fornecedores/cadastrar" class="px-6 py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl font-medium transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-plus"></i> Criar Primeiro Registro
+            </a>
+        </div>
+    {% else %}
+        <!-- Grid de Cards de Contacto -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for fornecedor in fornecedores %}
+                <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 flex flex-col hover:shadow-md transition-shadow relative group">
+                    
+                    <!-- Header do Card (Avatar e Opções) -->
+                    <div class="flex justify-between items-start mb-4">
+                        
+                        <div class="flex items-center gap-3">
+                            <!-- Avatar -->
+                            {% if fornecedor.foto %}
+                                <img src="/uploads/{{ fornecedor.foto }}" alt="Foto de {{ fornecedor.nome }}" class="w-12 h-12 rounded-full object-cover border-2 border-slate-50 dark:border-slate-800">
+                            {% else %}
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold
+                                    {% if fornecedor.tipo == 'pj' %} bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                    {% else %} bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 {% endif %}">
+                                    {% if fornecedor.tipo == 'pj' %}
+                                        <i class="ph-fill ph-buildings"></i>
+                                    {% else %}
+                                        <i class="ph-fill ph-user"></i>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Badges -->
+                            <div>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider
+                                    {% if fornecedor.tipo == 'pj' %} bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300
+                                    {% else %} bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 {% endif %}">
+                                    {{ fornecedor.tipo == 'pj' ? 'Pessoa Jurídica' : 'Pessoa Física' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown Menu de Opções -->
+                        <div class="relative dropdown-container">
+                            <button onclick="toggleDropdown({{ fornecedor.id }})" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1">
+                                <i class="ph-bold ph-dots-three-vertical text-xl"></i>
+                            </button>
+                            
+                            <div id="dropdown-{{ fornecedor.id }}" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 z-20 overflow-hidden">
+                                <a href="/fornecedores/editar/{{ fornecedor.id }}" class="flex items-center gap-2 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                    <i class="ph ph-pencil-simple"></i> Editar Registro
+                                </a>
+                                <form action="/fornecedores/excluir/{{ fornecedor.id }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este registo?');" class="m-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left">
+                                        <i class="ph ph-trash"></i> Excluir Registro
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informações Principais -->
+                    <div class="mb-5 flex-1">
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-white leading-tight mb-1">{{ fornecedor.nome }}</h3>
+                        {% if fornecedor.descricao %}
+                            <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2"><i class="ph-fill ph-cardholder mr-1"></i> {{ fornecedor.descricao }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Detalhes de Contacto (Lista) -->
+                    <div class="space-y-3 pt-4 border-t border-slate-50 dark:border-darkBorder">
+                        
+                        {% if fornecedor.documento %}
+                            <div class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                <i class="ph-fill ph-identification-card text-slate-400"></i>
+                                <span class="truncate">{{ fornecedor.documento }}</span>
+                            </div>
+                        {% endif %}
+
+                        {% if fornecedor.telefone %}
+                            <div class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                <i class="ph-fill ph-phone text-slate-400"></i>
+                                <span class="truncate">{{ fornecedor.telefone }}</span>
+                            </div>
+                        {% endif %}
+
+                        {% if fornecedor.email %}
+                            <div class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                <i class="ph-fill ph-envelope-simple text-slate-400"></i>
+                                <span class="truncate">{{ fornecedor.email }}</span>
+                            </div>
+                        {% endif %}
+
+                        {% if fornecedor.chave_pix %}
+                            <div class="flex items-center gap-3 text-sm text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-500/10 p-2 rounded-lg mt-2">
+                                <i class="ph-fill ph-key"></i>
+                                <span class="truncate flex-1">PIX: {{ fornecedor.chave_pix }}</span>
+                                <button onclick="copiarPix('{{ fornecedor.chave_pix }}')" class="hover:text-emerald-800 dark:hover:text-emerald-300" title="Copiar PIX">
+                                    <i class="ph-bold ph-copy"></i>
+                                </button>
+                            </div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {# Simulação de que a variável total_pages foi passada pelo PHP, caso seja maior que 1, a paginação aparece #}
+        {% set total_pages = total_pages|default(3) %}
+        {% set current_page = current_page|default(1) %}
+        
+        {% if total_pages > 1 %}
+        <div class="flex justify-center w-full mt-4 pb-4">
+            <nav class="flex items-center gap-1 bg-white dark:bg-darkCard p-1.5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder">
+                
+                <!-- Botão Anterior -->
+                <a href="?page={{ current_page - 1 }}{{ search ? '&search=' ~ search : '' }}" 
+                class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if current_page <= 1 %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}">
+                    <i class="ph-bold ph-caret-left text-lg"></i>
+                </a>
+
+                <div class="flex items-center gap-1 px-2">
+                    {% for page in 1..total_pages %}
+                        <a href="?page={{ page }}{{ search ? '&search=' ~ search : '' }}" 
+                        class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all
+                        {% if page == current_page %}
+                            bg-primary text-white shadow-sm shadow-indigo-200 dark:shadow-none
+                        {% else %}
+                            text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800
+                        {% endif %}">
+                            {{ page }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Botão Próximo -->
+                <a href="?page={{ current_page + 1 }}{{ search ? '&search=' ~ search : '' }}" 
+                class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if current_page >= total_pages %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}">
+                    <i class="ph-bold ph-caret-right text-lg"></i>
+                </a>
+            </nav>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- SCRIPTS DE INTERAÇÃO -->
+    <script>
+        // 1. Controle dos Dropdowns (Opções dos Cards)
+        function toggleDropdown(id) {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+                if(el.id !== `dropdown-${id}`) el.classList.add('hidden');
+            });
+            const dropdown = document.getElementById(`dropdown-${id}`);
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-container')) {
+                document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden'));
+            }
+        });
+
+        // 2. Copiar Chave PIX
+        function copiarPix(chave) {
+            navigator.clipboard.writeText(chave).then(() => {
+                alert("Chave PIX copiada para a área de transferência!");
+            }).catch(err => {
+                console.error('Erro ao copiar texto: ', err);
+            });
+        }
+    </script>
+
+    <script>
+        let timeout = null;
+
+        document.getElementById('inputPesquisa').addEventListener('keyup', function() {
+            clearTimeout(timeout);
+            
+            // Aguarda o usuário parar de digitar por 500ms
+            timeout = setTimeout(() => {
+                const termo = this.value;
+                
+                // Faz a requisição AJAX para o seu método list
+                fetch(`/fornecedores?search=${termo}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Converte o HTML recebido em um documento temporário
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Substitui apenas o grid de fornecedores e a paginação
+                    const novoGrid = doc.querySelector('.grid').innerHTML;
+                    document.querySelector('.grid').innerHTML = novoGrid;
+                    
+                    const novaPaginacao = doc.querySelector('nav') ? doc.querySelector('nav').parentElement.innerHTML : '';
+                    const containerPaginacao = document.querySelector('nav') ? document.querySelector('nav').parentElement : null;
+                    
+                    if (containerPaginacao) {
+                        containerPaginacao.innerHTML = novaPaginacao;
+                    }
+                });
+            }, 500);
+        });
+    </script>
+{% endblock %}

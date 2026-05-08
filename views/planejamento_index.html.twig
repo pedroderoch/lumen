@@ -1,0 +1,260 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Planejamento Mensal - Lumen Fintech{% endblock %}
+
+{% block page_title %}Planejamento{% endblock %}
+{% block page_subtitle %}Crie o seu orçamento e defina limites de gastos para o mês{% endblock %}
+
+{% block content %}
+
+    <!-- NAVEGAÇÃO DE MÊS (Igual aos Lançamentos) -->
+    <div class="flex items-center justify-between bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder mb-6 max-w-2xl mx-auto">
+        <a href="/planejamento{{ link_anterior }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <i class="ph-bold ph-caret-left text-xl"></i>
+        </a>
+        
+        <div class="text-center px-4">
+            <h3 class="text-lg sm:text-xl font-bold text-primary dark:text-indigo-400 capitalize m-0">{{ titulo_mes|default('Mês Atual') }}</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Orçamento Mensal</p>
+        </div>
+
+        <a href="/planejamento{{ link_proximo }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <i class="ph-bold ph-caret-right text-xl"></i>
+        </a>
+    </div>
+
+    <form action="/planejamento/salvar" method="POST" id="form-planejamento">
+        <!-- BLOCO SUPERIOR: RECEITA E DISTRIBUIÇÃO GERAL -->
+        <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 sm:p-8 mb-8 relative overflow-hidden">
+            <!-- Fundo Decorativo -->
+            <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+                
+                <!-- Definir Receita -->
+                <div class="flex flex-col justify-center">
+                    <label for="receita_base" class="block text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                        <i class="ph-fill ph-wallet text-primary mr-1"></i> Receita Estimada do Mês
+                    </label>
+                    <div class="relative max-w-sm">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span class="text-xl font-bold text-slate-400">R$</span>
+                        </div>
+                        <input type="text" id="receita_base" name="receita_base" value="{{ receita_base|default('0,00') }}" required onkeyup="formatarMoeda(this); calcularTudo();"
+                            class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-3xl font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Diga ao sistema quanto espera ganhar este mês para fatiar o orçamento.</p>
+                </div>
+
+                <!-- Resumo da Distribuição -->
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700">
+                    <div class="flex justify-between items-end mb-2">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Distribuído</p>
+                            <h4 id="display_percentual_total" class="text-2xl font-bold text-emerald-500">0%</h4>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Falta Alocar</p>
+                            <h4 id="display_valor_restante" class="text-lg font-bold text-slate-700 dark:text-slate-300">R$ 0,00</h4>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de Progresso Geral -->
+                    <div class="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-3">
+                        <div id="barra_progresso_total" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    
+                    <p id="msg_alerta_limite" class="text-xs font-bold text-rose-500 mt-2 hidden">
+                        <i class="ph-bold ph-warning-circle"></i> Atenção: Você ultrapassou 100% da sua receita!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOCO INFERIOR: CATEGORIAS (Os "Envelopes") -->
+        <div class="flex items-center justify-between mb-4 px-2">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Os seus "Envelopes"</h3>
+            <button type="submit" id="btn_salvar" class="px-6 py-2.5 bg-primary hover:bg-primaryHover text-white text-sm font-bold rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-floppy-disk text-lg"></i> Salvar Planejamento
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            {% for item in itens_planejamento %}
+                
+                <!-- Card do Envelope -->
+                <div class="bg-white dark:bg-darkCard p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder envelope-item">
+                    
+                    <input type="hidden" name="categoria_id[]" value="{{ item.categoria.id }}">
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style="background-color: {{ item.categoria.cor }}">
+                                <i class="ph-fill {{ item.categoria.icone }} text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">{{ item.categoria.nome }}</h4>
+                                <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded {{ item.categoria.comportamento == 'fixo' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600' }}">
+                                    {{ item.categoria.comportamento == 'fixo' ? 'Custo Fixo' : 'Variável' }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Input Porcentagem -->
+                        <div class="flex items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                            <input type="number" name="percentual[]" value="{{ item.percentual }}" min="0" max="100" step="1" 
+                                class="w-12 bg-transparent text-center text-sm font-bold text-slate-800 dark:text-white outline-none input-percentual">
+                            <span class="text-slate-400 font-bold text-sm pr-2">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider -->
+                    <div class="mb-4 px-1">
+                        <input type="range" min="0" max="100" value="{{ item.percentual }}" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary slider-percentual">
+                    </div>
+
+                    <!-- Resumo Financeiro da Categoria -->
+                    <div class="flex justify-between items-end border-t border-slate-50 dark:border-darkBorder pt-3 mt-2">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Limite Planejado</p>
+                            <p class="text-base font-bold text-slate-800 dark:text-white display-valor-calculado">R$ 0,00</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Gasto até agora</p>
+                            <p class="text-sm font-bold text-rose-500" data-gasto="{{ item.gasto_atual }}">R$ {{ item.gasto_atual|number_format(2, ',', '.') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Mini Barra de Progresso (Gasto vs Planejado) -->
+                    <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-2">
+                        <div class="h-full barra-gasto-categoria transition-all" style="width: 0%; background-color: {{ item.categoria.cor }}"></div>
+                    </div>
+                </div>
+
+            {% endfor %}
+        </div>
+    </form>
+
+    <!-- SCRIPTS MÁGICOS DE CÁLCULO -->
+    <script>
+        // Função para formatar o input da Receita Base (moeda)
+        function formatarMoeda(i) {
+            var v = i.value.replace(/\D/g,'');
+            v = (v/100).toFixed(2) + '';
+            v = v.replace(".", ",");
+            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            i.value = v;
+        }
+
+        // Converte string BRL (ex: 1.500,00) para Float do JS (1500.00)
+        function getReceitaBaseFloat() {
+            let str = document.getElementById('receita_base').value;
+            if(!str) return 0;
+            str = str.replace(/\./g, '').replace(',', '.');
+            return parseFloat(str) || 0;
+        }
+
+        // Formata Float do JS para String BRL
+        function formatMoneyBR(valor) {
+            return "R$ " + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // A grande função que calcula tudo em tempo real
+        function calcularTudo() {
+            const receitaBase = getReceitaBaseFloat();
+            const envelopes = document.querySelectorAll('.envelope-item');
+            let totalPercentual = 0;
+
+            envelopes.forEach(envelope => {
+                const inputPerc = envelope.querySelector('.input-percentual');
+                const slider = envelope.querySelector('.slider-percentual');
+                const displayValor = envelope.querySelector('.display-valor-calculado');
+                const barraGasto = envelope.querySelector('.barra-gasto-categoria');
+                const gastoAtual = parseFloat(envelope.querySelector('[data-gasto]').getAttribute('data-gasto'));
+
+                // Garante sincronia entre slider e input
+                let percentual = parseFloat(inputPerc.value) || 0;
+                
+                // Calcula o valor em R$ que essa porcentagem representa
+                let valorCalculado = (receitaBase * percentual) / 100;
+                displayValor.innerText = formatMoneyBR(valorCalculado);
+
+                // Calcula como está o progresso do gasto em relação ao planejado!
+                if(valorCalculado > 0) {
+                    let percGasto = (gastoAtual / valorCalculado) * 100;
+                    if(percGasto > 100) percGasto = 100; // Trava a barra visual em 100%
+                    barraGasto.style.width = percGasto + "%";
+                    // Fica vermelho se estourou o limite!
+                    if(percGasto >= 100) barraGasto.classList.add('bg-rose-500');
+                    else barraGasto.classList.remove('bg-rose-500');
+                } else {
+                    barraGasto.style.width = "0%";
+                }
+
+                totalPercentual += percentual;
+            });
+
+            // Atualiza Resumo Global
+            const displayTotalPerc = document.getElementById('display_percentual_total');
+            const displayValorRestante = document.getElementById('display_valor_restante');
+            const barraTotal = document.getElementById('barra_progresso_total');
+            const alerta = document.getElementById('msg_alerta_limite');
+            const btnSalvar = document.getElementById('btn_salvar');
+
+            displayTotalPerc.innerText = totalPercentual + "%";
+            
+            let valorRestante = receitaBase - ((receitaBase * totalPercentual) / 100);
+            displayValorRestante.innerText = formatMoneyBR(valorRestante);
+
+            // Regras Visuais e Bloqueios
+            if(totalPercentual > 100) {
+                barraTotal.style.width = "100%";
+                barraTotal.classList.replace('bg-emerald-500', 'bg-rose-500');
+                displayTotalPerc.classList.replace('text-emerald-500', 'text-rose-500');
+                alerta.classList.remove('hidden');
+                btnSalvar.disabled = true;
+                btnSalvar.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                barraTotal.style.width = totalPercentual + "%";
+                barraTotal.classList.replace('bg-rose-500', 'bg-emerald-500');
+                displayTotalPerc.classList.replace('text-rose-500', 'text-emerald-500');
+                alerta.classList.add('hidden');
+                btnSalvar.disabled = false;
+                btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Ligar os eventos (Sincronizar Slider <-> Input Numérico)
+        document.addEventListener("DOMContentLoaded", () => {
+            const envelopes = document.querySelectorAll('.envelope-item');
+            
+            envelopes.forEach(envelope => {
+                const inputPerc = envelope.querySelector('.input-percentual');
+                const slider = envelope.querySelector('.slider-percentual');
+
+                // Se mexer no input, atualiza o slider e calcula
+                inputPerc.addEventListener('input', (e) => {
+                    let val = e.target.value;
+                    if(val > 100) val = 100;
+                    if(val < 0) val = 0;
+                    e.target.value = val;
+                    slider.value = val;
+                    calcularTudo();
+                });
+
+                // Se mexer no slider, atualiza o input e calcula
+                slider.addEventListener('input', (e) => {
+                    inputPerc.value = e.target.value;
+                    calcularTudo();
+                });
+            });
+
+            // Disparar o cálculo na primeira vez que a página carrega
+            calcularTudo();
+        });
+    </script>
+{% endblock %}
+
+
+    

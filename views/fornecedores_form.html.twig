@@ -1,0 +1,188 @@
+{% extends "layout.html.twig" %}
+
+{# Define se é modo edição ou cadastro baseado na existência do ID #}
+{% set modo = fornecedor.id ? 'Editar' : 'Adicionar' %}
+
+{% block title %}{{ modo }} Fornecedor - Lumen Fintech{% endblock %}
+
+{% block page_title %}Fornecedores{% endblock %}
+{% block page_subtitle %}{{ modo == 'Editar' ? 'Atualizar dados do registro' : 'Registre as pessoas ou empresas com as quais transaciona' }}{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto">
+        <!-- Card do Formulário -->
+        <div class="bg-white dark:bg-darkCard p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-darkBorder pb-4">
+                <div class="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center">
+                    <i class="ph-bold {{ modo == 'Editar' ? 'ph-user-gear' : 'ph-user-plus' }} ph-address-book text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Dados do Registro</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        {{ modo == 'Editar' ? 'Altere as informações necessárias abaixo.' : 'Preencha os dados para criar um novo Fornecedor!' }}
+                    </p>
+                </div>
+            </div>
+
+            {# Alertas de Erro #}
+            {% if session_has('errors') %}
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <i class="ph-fill ph-warning-circle text-lg"></i>
+                        <span>Verifique os erros abaixo:</span>
+                    </div>
+                    <ul class="list-disc list-inside ml-2">
+                        {% for erro in session_get('errors') %}
+                            <li>{{ erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {# Ação dinâmica do Formulário #}
+            <form action="{{ modo == 'Editar' ? '/fornecedores/atualizar/' ~ fornecedor.id : '/fornecedores/criar' }}" 
+                  method="POST" id="formFornecedor" class="space-y-6" enctype="multipart/form-data">
+
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Tipo de Pessoa (Radio Buttons Customizados) -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Tipo de Registro <span class="text-rose-500">*</span></label>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="relative flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-indigo-50 dark:has-[:checked]:bg-indigo-500/10">
+                            <input type="radio" name="tipo" value="pf" class="w-4 h-4 text-primary focus:ring-primary dark:bg-slate-700 dark:border-slate-600" 
+                                   {% if old['tipo'] == 'pf' or fornecedor.tipo == 'pf' or (old['tipo'] is not defined and fornecedor.tipo is not defined) %}checked{% endif %} onchange="mudarTipoDocumento('pf')">
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="ph-fill ph-user text-slate-400"></i> Pessoa Física (PF)
+                            </span>
+                        </label>
+
+                        <label class="relative flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors has-[:checked]:border-primary has-[:checked]:bg-indigo-50 dark:has-[:checked]:bg-indigo-500/10">
+                            <input type="radio" name="tipo" value="pj" class="w-4 h-4 text-primary focus:ring-primary dark:bg-slate-700 dark:border-slate-600" 
+                                   {% if old['tipo'] == 'pj' or fornecedor.tipo == 'pj' %}checked{% endif %} onchange="mudarTipoDocumento('pj')">
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="ph-fill ph-buildings text-slate-400"></i> Pessoa Jurídica (PJ)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nome / Razão Social -->
+                    <div class="md:col-span-2">
+                        <label for="nome" id="labelNome" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-text-aa text-lg"></i>
+                            </div>
+                            <input type="text" id="nome" name="nome" value="{{ old['nome'] ?? fornecedor.nome ?? '' }}" required
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Nome da pessoa ou empresa">
+                        </div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="md:col-span-2">
+                        <label for="descricao" id="labelDescricao" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-text-aa text-lg"></i>
+                            </div>
+                            <input type="text" id="descricao" name="descricao" value="{{ old['descricao'] ?? fornecedor.descricao ?? '' }}"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Descrição da pessoa ou empresa">
+                        </div>
+                    </div>
+
+                    <!-- Documento (CPF/CNPJ) -->
+                    <div>
+                        <label for="documento" id="labelDocumento" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">CPF <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-identification-card text-lg"></i>
+                            </div>
+                            <input type="text" id="documento" name="documento" value="{{ old['documento'] ?? fornecedor.documento ?? '' }}"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="Apenas números">
+                        </div>
+                    </div>
+                    
+                    <!-- Chave PIX -->
+                    <div>
+                        <label for="chave_pix" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Chave PIX <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-key text-lg"></i>
+                            </div>
+                            <input type="text" id="chave_pix" name="chave_pix" value="{{ old['chave_pix'] ?? fornecedor.chave_pix ?? '' }}"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="E-mail, CPF, Telefone ou Aleatória">
+                        </div>
+                    </div>
+
+                    <!-- E-mail -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-mail <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-envelope-simple text-lg"></i>
+                            </div>
+                            <input type="email" id="email" name="email" value="{{ old['email'] ?? fornecedor.email ?? '' }}"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="contato@empresa.com">
+                        </div>
+                    </div>
+
+                    <!-- Telefone -->
+                    <div>
+                        <label for="telefone" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Telefone/WhatsApp <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="ph ph-phone text-lg"></i>
+                            </div>
+                            <input type="text" id="telefone" name="telefone" value="{{ old['telefone'] ?? fornecedor.telefone ?? '' }}"
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                                placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100 dark:border-darkBorder mt-8">
+                    <a href="/fornecedores" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-center">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primaryHover shadow-sm transition-colors flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i> {{ modo == 'Editar' ? 'Atualizar Alterações' : 'Salvar Fornecedor' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function mudarTipoDocumento(tipo) {
+            const labelNome = document.getElementById('labelNome');
+            const labelDocumento = document.getElementById('labelDocumento');
+            const inputDocumento = document.getElementById('documento');
+            
+            if (tipo === 'pj') {
+                labelNome.innerHTML = 'Razão Social <span class="text-rose-500">*</span>';
+                labelDocumento.innerHTML = 'CNPJ <span class="text-slate-400 font-normal">(Opcional)</span>';
+                inputDocumento.placeholder = "00.000.000/0000-00";
+            } else {
+                labelNome.innerHTML = 'Nome Completo <span class="text-rose-500">*</span>';
+                labelDocumento.innerHTML = 'CPF <span class="text-slate-400 font-normal">(Opcional)</span>';
+                inputDocumento.placeholder = "000.000.000-00";
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            const pjInput = document.querySelector('input[name="tipo"][value="pj"]');
+            if (pjInput && pjInput.checked) {
+                mudarTipoDocumento('pj');
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,218 @@
+<!-- FLUXO DE CAIXA -->
+<div class="lg:col-span-2 bg-white dark:bg-darkCard p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
+    
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Fluxo de Caixa</h3>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Entradas, saídas e saldo ao longo dos meses</p>
+        </div>
+        <select
+            id="fluxoCaixaFiltro"
+            class="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-300 py-2 px-4 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+        >
+            <option value="3">Últimos 3 meses</option>
+            <option value="6">Últimos 6 meses</option>
+            <option value="12" selected>Ano completo</option>
+        </select>
+    </div>
+
+    <!-- Legenda -->
+    <div class="flex flex-wrap items-center gap-4 mb-4">
+        <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span>
+            Entradas
+        </span>
+        <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span class="w-3 h-3 rounded-sm bg-rose-500 inline-block"></span>
+            Saídas
+        </span>
+        <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span class="w-3 h-3 rounded-sm bg-indigo-500 inline-block"></span>
+            Saldo
+        </span>
+    </div>
+
+    <!-- Canvas do gráfico -->
+    <div class="relative h-64">
+        <canvas id="fluxoCaixaChart"></canvas>
+    </div>
+</div>
+
+<!-- Dados do Twig passados pro JS via JSON -->
+<script>
+(function () {
+    // Dados vindos do backend Twig
+    const fluxoData = {{ fluxo_caixa | json_encode | raw }};
+
+    // Calcula saldo (entradas - saidas) para cada mês
+    const todosLabels  = fluxoData.map(d => d.mes);
+    const todasEntradas = fluxoData.map(d => parseFloat(d.entradas));
+    const todasSaidas   = fluxoData.map(d => parseFloat(d.saidas));
+    const todosSaldos   = fluxoData.map(d => parseFloat(d.entradas) - parseFloat(d.saidas));
+
+    // Detecta tema dark
+    const isDark = () => document.documentElement.classList.contains('dark');
+
+    // Cores
+    const cores = {
+        entrada: {
+            bar:    'rgba(16, 185, 129, 0.85)',   // emerald-500
+            border: 'rgba(16, 185, 129, 1)',
+        },
+        saida: {
+            bar:    'rgba(244, 63, 94, 0.85)',     // rose-500
+            border: 'rgba(244, 63, 94, 1)',
+        },
+        saldo: {
+            positivo: 'rgba(99, 102, 241, 0.85)',  // indigo-500
+            negativo: 'rgba(251, 146, 60, 0.85)',  // orange-400
+        },
+    };
+
+    let chart = null;
+
+    function getGridColor() {
+        return isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    }
+
+    function getTickColor() {
+        return isDark() ? '#94a3b8' : '#64748b';
+    }
+
+    function buildChart(meses) {
+        const ctx = document.getElementById('fluxoCaixaChart').getContext('2d');
+
+        const mesAtual = new Date().getMonth() + 1; // ex: maio = 5
+
+        // Pega do mês (mesAtual - meses) até o mês atual
+        const inicio = Math.max(0, mesAtual - meses);
+        const fim    = mesAtual;
+
+        // Fatia os dados conforme filtro
+        const labels   = todosLabels.slice(inicio, fim);
+        const entradas = todasEntradas.slice(inicio, fim);
+        const saidas   = todasSaidas.slice(inicio, fim);
+        const saldos   = todosSaldos.slice(inicio, fim);
+
+        if (chart) chart.destroy();
+
+        chart = new Chart(ctx, {
+            data: {
+                labels,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Entradas',
+                        data: entradas,
+                        backgroundColor: cores.entrada.bar,
+                        borderColor: cores.entrada.border,
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        order: 2,
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Saídas',
+                        data: saidas,
+                        backgroundColor: cores.saida.bar,
+                        borderColor: cores.saida.border,
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        order: 2,
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Saldo',
+                        data: saldos,
+                        backgroundColor: saldos.map(v => v >= 0 ? cores.saldo.positivo : cores.saldo.negativo),
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        order: 2,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark() ? '#1e293b' : '#fff',
+                        titleColor:      isDark() ? '#e2e8f0' : '#1e293b',
+                        bodyColor:       isDark() ? '#94a3b8' : '#64748b',
+                        borderColor:     isDark() ? '#334155' : '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 12,
+                        callbacks: {
+                            label: function (ctx) {
+                                const valor = ctx.parsed.y;
+                                const formatado = 'R$ ' + Math.abs(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                const prefixo = valor < 0 ? '-' : '';
+                                return `  ${ctx.dataset.label}: ${prefixo}${formatado}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            color: getTickColor(),
+                            font: { size: 12, weight: '500' },
+                        },
+                        border: { display: false },
+                    },
+                    y: {
+                        grid: {
+                            color: getGridColor(),
+                            drawTicks: false,
+                        },
+                        ticks: {
+                            color: getTickColor(),
+                            font: { size: 11 },
+                            padding: 8,
+                            callback: (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 0 }),
+                        },
+                        border: { display: false, dash: [4, 4] },
+                    },
+                },
+            },
+        });
+    }
+
+    // Carrega Chart.js se ainda não estiver disponível
+    function init() {
+        const filtro = document.getElementById('fluxoCaixaFiltro');
+        buildChart(parseInt(filtro.value));
+
+        filtro.addEventListener('change', function () {
+            buildChart(parseInt(this.value));
+        });
+    }
+
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        script.onload = init;
+        document.head.appendChild(script);
+    } else {
+        init();
+    }
+
+    // Rebuida ao trocar dark mode (caso use toggle de tema)
+    const observer = new MutationObserver(() => {
+        const filtro = document.getElementById('fluxoCaixaFiltro');
+        if (filtro) buildChart(parseInt(filtro.value));
+    });
+    observer.observe(document.documentElement, { attributeFilter: ['class'] });
+})();
+</script>

@@ -33,7 +33,8 @@ class HomeController extends BaseController
             'dados_cartao' => $this->getDadosCartaoCredito($usuarioId),
             'gastos_categoria' => $this->getGastosPorCategoria($usuarioId),
             'ultimos_lancamentos' => $this->getBuscaUltimosLancamentos($usuarioId),
-            'mes_atual' => $this->getMesAtualExtenso()
+            'mes_atual' => $this->getMesAtualExtenso(),
+            'fluxo_caixa' => $this->getFluxoCaixaMeses($usuarioId),
         ];
 
         $this->render('dashboard.html.twig', $dados);
@@ -283,6 +284,40 @@ class HomeController extends BaseController
         $ano = date('Y');
 
         return $meses[$mes] . ', ' . $ano;
+    }
+
+    /**
+    * Retorna entradas e saídas agrupadas por mês para o Fluxo de Caixa
+    */
+    private function getFluxoCaixaMeses(int $userId, int $meses = 12): array
+    {
+        $anoAtual = (int) date('Y');
+        $mesesNome = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        $resultado = [];
+
+        for ($mes = 1; $mes <= 12; $mes++) {
+            $entradas = (float) Lancamento::where('usuario_id', $userId)
+                ->where('tipo', 'entrada')
+                ->where('situacao_id', 1)
+                ->whereMonth('data_vencimento', $mes)
+                ->whereYear('data_vencimento', $anoAtual)
+                ->sum('valor');
+
+            $saidas = (float) Lancamento::where('usuario_id', $userId)
+                ->where('tipo', 'saida')
+                ->where('situacao_id', 1)
+                ->whereMonth('data_vencimento', $mes)
+                ->whereYear('data_vencimento', $anoAtual)
+                ->sum('valor');
+
+            $resultado[] = [
+                'mes'      => $mesesNome[$mes - 1],
+                'entradas' => $entradas,
+                'saidas'   => $saidas,
+            ];
+        }
+
+        return $resultado;
     }
 
 

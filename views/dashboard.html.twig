@@ -210,8 +210,10 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {{ include('fluxo_caixa_component.html.twig') }}
         
-        <!-- FLUXO DE CAIXA -->
+        {# <!-- FLUXO DE CAIXA -->
         <div class="lg:col-span-2 bg-white dark:bg-darkCard p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white">Fluxo de Caixa</h3>
@@ -227,7 +229,7 @@
                     <p class="text-sm font-medium text-slate-400 dark:text-slate-500">Gráfico será renderizado aqui</p>
                 </div>
             </div>
-        </div>
+        </div> #}
 
         <!-- TOP CATEGORIAS -->
         <div class="bg-white dark:bg-darkCard p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col">

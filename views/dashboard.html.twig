@@ -163,8 +163,8 @@
         
         <div class="flex overflow-x-auto pb-4 snap-x snap-mandatory hide-scroll gap-4 sm:gap-6 md:grid md:grid-cols-3">
             {% for cartao in dados_cartao %}
-
-                <div class="min-w-[280px] md:min-w-0 snap-center bg-[#8A05BE] p-6 rounded-3xl shadow-md relative overflow-hidden group text-white">
+                {# <pre>{{ cartao|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre> #}
+                <div class="min-w-[280px] md:min-w-0 snap-center bg-[{{cartao.cor}}] p-6 rounded-3xl shadow-md relative overflow-hidden group text-white">
 
                     <div class="flex justify-between items-center mb-6 relative z-10">
                         <span class="font-bold text-lg tracking-wider">

@@ -49,7 +49,7 @@ class LancamentoController extends BaseController
             'mes_anterior'  => $anterior->format('m'),
             'ano_anterior'  => $anterior->format('Y'),
             'mes_proximo'   => $proximo->format('m'),
-            'ano_proximo'   => $proximo->format('Y')
+            'ano_proximo'   => $proximo->format('Y'),
         ]);
     }
 
@@ -86,10 +86,12 @@ class LancamentoController extends BaseController
 
         $this->render('lancamentos_form.html.twig', [
             'lancamento'   => new Lancamento(),
-            'categorias'   => Categoria::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
+            'categorias'   => Categoria::where('usuario_id', $usuarioId)->where('situacao_id', 1)->orderBy('nome', 'ASC')->get(),
             'contas'       => ContaBancaria::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
             'cartoes'      => CartaoCredito::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
-            'fornecedores' => Fornecedor::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get()
+            'fornecedores' => Fornecedor::where('usuario_id', $usuarioId)->where('situacao_id', 1)->orderBy('nome', 'ASC')->get(),
+            'cartoes_ativos' => $this->getCartoesAtivos($usuarioId)
+
         ]);
     }
 
@@ -209,5 +211,14 @@ class LancamentoController extends BaseController
 
         header('Location: /lancamentos');
         exit;
+    }
+
+    private function getCartoesAtivos(int $userId)
+    {
+
+        return CartaoCredito::where('usuario_id', $userId)
+            ->where('situacao_id', 1)
+            ->get();
+
     }
 }

@@ -17,6 +17,9 @@ return FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     // HOME 
     $r->addRoute('GET', '/', ['App\Controller\HomeController', 'index']);
 
+    //GAMBIARRA DE PRIMEIRO ACESSO
+    $r->addRoute('GET', '/primeiro-acesso', ['App\Controller\AuthController', 'primeiroAcesso']);
+
    // ROTAS DE AUTENTICACAO
     $r->addRoute('GET', '/login', ['App\Controller\AuthController', 'index']);
     $r->addRoute('POST', '/login', ['App\Controller\AuthController', 'login']);

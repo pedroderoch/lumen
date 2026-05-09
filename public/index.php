@@ -43,7 +43,12 @@ if (session_status() === PHP_SESSION_NONE) {
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // 2. Rotas que NÃO precisam de login
-$rotasPublicas = ['/login'];
+// $rotasPublicas = ['/login'];
+$rotasPublicas = [
+    '/login',
+    '/autenticar',
+    '/primeiro-acesso'
+];
 
 // 3. Verificação de Identidade
 $usuarioLogado = isset($_SESSION['user_id']);

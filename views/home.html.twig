@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumen Fintech — Controle Financeiro Inteligente</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --indigo: #6366f1;
+    --indigo-dark: #4f46e5;
+    --indigo-light: #e0e7ff;
+    --emerald: #10b981;
+    --rose: #f43f5e;
+    --amber: #f59e0b;
+    --dark: #0f172a;
+    --dark-card: #1e293b;
+    --dark-border: #334155;
+    --text-muted: #94a3b8;
+    --text-light: #cbd5e1;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  h1,h2,h3,h4 { font-family: 'Sora', sans-serif; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(99,102,241,0.15);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--indigo);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 16px; color: #fff;
+  }
+  .logo-text { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; color: #f1f5f9; }
+  .logo-text span { color: var(--indigo); }
+  nav a.cta-nav {
+    background: var(--indigo); color: #fff; border: none;
+    padding: 0.5rem 1.25rem; border-radius: 10px; font-size: 14px;
+    font-weight: 500; cursor: pointer; text-decoration: none;
+    transition: background 0.2s;
+  }
+  nav a.cta-nav:hover { background: var(--indigo-dark); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 7rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(99,102,241,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc; padding: 0.35rem 1rem; border-radius: 100px;
+    font-size: 13px; font-weight: 500; margin-bottom: 1.5rem;
+  }
+  .badge span { width: 6px; height: 6px; border-radius: 50%; background: #6366f1; display: inline-block; }
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 800;
+    line-height: 1.15; color: #f1f5f9; max-width: 750px; margin-bottom: 1.25rem;
+  }
+  .hero h1 em { font-style: normal; color: var(--indigo); }
+  .hero p { font-size: 1.1rem; color: var(--text-muted); max-width: 540px; margin-bottom: 2.5rem; }
+  .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 4rem; }
+  .btn-primary {
+    background: var(--indigo); color: #fff; padding: 0.8rem 2rem;
+    border-radius: 12px; font-weight: 600; font-size: 15px; border: none;
+    cursor: pointer; text-decoration: none; transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--indigo-dark); transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent; color: #e2e8f0; padding: 0.8rem 2rem;
+    border-radius: 12px; font-weight: 500; font-size: 15px;
+    border: 1px solid var(--dark-border); cursor: pointer; text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--indigo); color: #a5b4fc; }
+
+  /* DASHBOARD MOCKUP */
+  .dash-mockup {
+    width: 100%; max-width: 860px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .dash-topbar {
+    background: #0f172a; padding: 12px 20px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #334155;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #f43f5e; }
+  .dot.y { background: #f59e0b; }
+  .dot.g { background: #10b981; }
+  .dash-topbar span { font-size: 12px; color: #475569; margin-left: 8px; flex: 1; text-align: center; }
+  .dash-body { padding: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .dash-card {
+    background: #0f172a; border-radius: 14px; padding: 14px;
+    border: 1px solid #334155;
+  }
+  .dash-card.accent { background: #6366f1; border-color: #6366f1; }
+  .dash-card-label { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+  .dash-card.accent .dash-card-label { color: #c7d2fe; }
+  .dash-card-value { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; color: #f1f5f9; }
+  .dash-card.accent .dash-card-value { color: #fff; }
+  .dash-card-sub { font-size: 10px; color: #10b981; margin-top: 4px; }
+  .dash-chart-row { padding: 0 20px 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .dash-chart-box { background: #0f172a; border-radius: 14px; padding: 16px; border: 1px solid #334155; }
+  .dash-chart-title { font-size: 12px; color: #94a3b8; margin-bottom: 12px; font-weight: 500; }
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 80px; }
+  .bar-group { display: flex; align-items: flex-end; gap: 3px; flex: 1; }
+  .bar { border-radius: 4px 4px 0 0; flex: 1; }
+  .bar.entrada { background: #10b981; }
+  .bar.saida { background: #f43f5e; }
+  .bar.saldo { background: #6366f1; }
+  .bar-label { font-size: 9px; color: #475569; text-align: center; margin-top: 4px; }
+  .cat-list { display: flex; flex-direction: column; gap: 10px; }
+  .cat-item { display: flex; flex-direction: column; gap: 4px; }
+  .cat-info { display: flex; justify-content: space-between; font-size: 11px; }
+  .cat-name { color: #94a3b8; }
+  .cat-val { color: #f1f5f9; font-weight: 500; }
+  .cat-bar { height: 5px; border-radius: 10px; background: #1e293b; overflow: hidden; }
+  .cat-fill { height: 100%; border-radius: 10px; }
+
+  /* SECTION */
+  section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-badge {
+    display: inline-block; background: rgba(99,102,241,0.1); color: #a5b4fc;
+    font-size: 12px; font-weight: 600; padding: 4px 14px; border-radius: 100px;
+    margin-bottom: 1rem; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .section-title { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 700; color: #f1f5f9; margin-bottom: 1rem; }
+  .section-sub { font-size: 1.05rem; color: var(--text-muted); max-width: 550px; }
+
+  /* FEATURES */
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; margin-top: 3rem; }
+  .feature-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 20px;
+    padding: 28px; transition: border-color 0.2s, transform 0.2s;
+  }
+  .feature-card:hover { border-color: rgba(99,102,241,0.5); transform: translateY(-3px); }
+  .feature-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 1rem;
+  }
+  .feature-card h3 { font-size: 17px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+  .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+
+  /* STATS */
+  .stats-section {
+    background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.05));
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 28px; padding: 4rem 3rem; margin: 0 2rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem; text-align: center;
+  }
+  .stat-num { font-family: 'Sora', sans-serif; font-size: 2.8rem; font-weight: 800; color: #f1f5f9; }
+  .stat-num span { color: var(--indigo); }
+  .stat-label { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+  /* HOW IT WORKS */
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-top: 3rem; }
+  .step { text-align: center; }
+  .step-num {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(99,102,241,0.12); border: 2px solid rgba(99,102,241,0.3);
+    color: #a5b4fc; font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+  }
+  .step h3 { font-size: 16px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+  .step p { font-size: 13px; color: var(--text-muted); }
+
+  /* CTA WHATSAPP */
+  .wpp-section {
+    margin: 0 2rem 6rem;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid #334155; border-radius: 28px;
+    padding: 4rem 3rem; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .wpp-glow {
+    position: absolute; bottom: -50%; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(37,211,102,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .wpp-section h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; color: #f1f5f9; margin-bottom: 1rem; }
+  .wpp-section p { color: var(--text-muted); font-size: 1rem; max-width: 480px; margin: 0 auto 2rem; }
+  .btn-wpp {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #25d366; color: #fff; font-weight: 700; font-size: 16px;
+    padding: 1rem 2.5rem; border-radius: 16px; text-decoration: none;
+    border: none; cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 8px 24px rgba(37,211,102,0.25);
+  }
+  .btn-wpp:hover { background: #1ebe5d; transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,211,102,0.35); }
+  .wpp-icon { font-size: 22px; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid #1e293b; padding: 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem; max-width: 1100px; margin: 0 auto;
+  }
+  footer p { font-size: 13px; color: #475569; }
+
+  /* SCROLL REVEAL */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .dash-body { grid-template-columns: repeat(2, 1fr); }
+    .dash-chart-row { grid-template-columns: 1fr; }
+    .stats-section { margin: 0 1rem; padding: 2.5rem 1.5rem; }
+    .wpp-section { margin: 0 1rem 4rem; padding: 2.5rem 1.5rem; }
+    nav { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">L</div>
+    <span class="logo-text">Lumen <span>Fintech</span></span>
+  </a>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <a href="#planos" style="font-size:14px;color:#94a3b8;text-decoration:none">Planos</a>
+    <a href="#contato" class="cta-nav wpp-nav" style="background:#25d366">Falar no WhatsApp</a>
+    <a href="/login" class="cta-nav" style="margin-left:0">Entrar no sistema</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="badge"><span></span> Controle financeiro inteligente</div>
+  <h1>Seu dinheiro sob <em>controle total</em>, mês a mês.</h1>
+  <p>Lumen Fintech é o sistema completo para gerenciar entradas, saídas, cartões de crédito e categorias de gasto — tudo em um só lugar.</p>
+  <div class="hero-btns">
+    <a href="/login" class="btn-primary">Entrar no sistema →</a>
+    <a href="#funcionalidades" class="btn-outline">Ver funcionalidades</a>
+  </div>
+
+  <div class="dash-mockup reveal">
+    <div class="dash-topbar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <span>app.lumenfintech.com.br — Dashboard</span>
+    </div>
+    <div class="dash-body">
+      <div class="dash-card accent">
+        <div class="dash-card-label">Resultado do Mês</div>
+        <div class="dash-card-value">R$ 2.340</div>
+        <div class="dash-card-sub">↑ Positivo</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Total a Receber</div>
+        <div class="dash-card-value">R$ 8.500</div>
+        <div class="dash-card-sub" style="color:#10b981">Recebido: R$ 6.160</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Total a Pagar</div>
+        <div class="dash-card-value">R$ 6.160</div>
+        <div class="dash-card-sub" style="color:#f43f5e">Em aberto: R$ 1.200</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Saldo em Contas</div>
+        <div class="dash-card-value">R$ 14.890</div>
+        <div class="dash-card-sub" style="color:#94a3b8">Hoje</div>
+      </div>
+    </div>
+    <div class="dash-chart-row">
+      <div class="dash-chart-box">
+        <div class="dash-chart-title">Fluxo de Caixa — 2025</div>
+        <div class="bars">
+          <div style="flex:1">
+            <div class="bar-group"><div class="bar entrada" style="height:45px"></div><div class="bar saida" style="height:35px"></div><div class="bar saldo" style="height:20px"></div></div>
+            <div class="bar-label">Jan</div>
+          </div>
+          <div style="flex:1">
+            <div class="bar-group"><div class="bar entrada" style="height:55px"></div><div class="bar saida" style="height:40px"></div><div class="bar saldo" style="height:25px"></div></div>
+            <div class="bar-label">Fev</div>
+          </div>
+          <div style="flex:1">
+            <div class="bar-group"><div class="bar entrada" style="height:48px"></div><div class="bar saida" style="height:52px"></div><div class="bar saldo" style="height:10px; background:#f43f5e"></div></div>
+            <div class="bar-label">Mar</div>
+          </div>
+          <div style="flex:1">
+            <div class="bar-group"><div class="bar entrada" style="height:70px"></div><div class="bar saida" style="height:44px"></div><div class="bar saldo" style="height:36px"></div></div>
+            <div class="bar-label">Abr</div>
+          </div>
+          <div style="flex:1">
+            <div class="bar-group"><div class="bar entrada" style="height:65px"></div><div class="bar saida" style="height:42px"></div><div class="bar saldo" style="height:30px"></div></div>
+            <div class="bar-label">Mai</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-chart-box">
+        <div class="dash-chart-title">Onde gastei mais?</div>
+        <div class="cat-list">
+          <div class="cat-item">
+            <div class="cat-info"><span class="cat-name">Alimentação</span><span class="cat-val">R$ 1.240</span></div>
+            <div class="cat-bar"><div class="cat-fill" style="width:72%;background:#6366f1"></div></div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-info"><span class="cat-name">Transporte</span><span class="cat-val">R$ 680</span></div>
+            <div class="cat-bar"><div class="cat-fill" style="width:40%;background:#10b981"></div></div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-info"><span class="cat-name">Lazer</span><span class="cat-val">R$ 420</span></div>
+            <div class="cat-bar"><div class="cat-fill" style="width:24%;background:#f59e0b"></div></div>
+          </div>
+          <div class="cat-item">
+            <div class="cat-info"><span class="cat-name">Saúde</span><span class="cat-val">R$ 310</span></div>
+            <div class="cat-bar"><div class="cat-fill" style="width:18%;background:#f43f5e"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-section reveal">
+  <div>
+    <div class="stat-num">100<span>%</span></div>
+    <div class="stat-label">Controle das suas finanças</div>
+  </div>
+  <div>
+    <div class="stat-num">12<span>+</span></div>
+    <div class="stat-label">Categorias de gasto</div>
+  </div>
+  <div>
+    <div class="stat-num">0<span>%</span></div>
+    <div class="stat-label">Surpresas no fim do mês</div>
+  </div>
+  <div>
+    <div class="stat-num">∞</div>
+    <div class="stat-label">Lançamentos registrados</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="funcionalidades">
+  <div class="reveal">
+    <div class="section-badge">Funcionalidades</div>
+    <h2 class="section-title">Tudo que você precisa para <br>organizar sua vida financeira</h2>
+    <p class="section-sub">Do lançamento simples ao controle detalhado de cartões e categorias.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon" style="background:rgba(99,102,241,0.12)">💰</div>
+      <h3>Entradas e Saídas</h3>
+      <p>Registre receitas e despesas com categoria, fornecedor, forma de pagamento e status. Tenha o extrato sempre atualizado.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon" style="background:rgba(16,185,129,0.12)">📊</div>
+      <h3>Fluxo de Caixa Mensal</h3>
+      <p>Visualize mês a mês suas entradas, saídas e saldo com gráficos interativos. Identifique padrões e tome decisões melhores.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon" style="background:rgba(245,158,11,0.12)">🏷️</div>
+      <h3>Categorias de Gasto</h3>
+      <p>Organize seus gastos por categoria personalizada. Veja onde seu dinheiro vai e descubra onde economizar.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon" style="background:rgba(244,63,94,0.12)">💳</div>
+      <h3>Cartão de Crédito</h3>
+      <p>Controle a fatura de cada cartão, data de vencimento e fechamento. Nunca mais seja pego de surpresa.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon" style="background:rgba(99,102,241,0.12)">📅</div>
+      <h3>Custos Fixos e Variáveis</h3>
+      <p>Separe o que é fixo do que é variável. Planeje seu orçamento com previsibilidade e reduza os gastos desnecessários.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon" style="background:rgba(16,185,129,0.12)">🏦</div>
+      <h3>Contas Bancárias</h3>
+      <p>Gerencie múltiplas contas e veja o saldo consolidado em tempo real. Nunca perca o controle do seu caixa.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="reveal">
+    <div class="section-badge">Como funciona</div>
+    <h2 class="section-title">Simples de usar, <br>poderoso nos resultados</h2>
+  </div>
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">1</div>
+      <h3>Cadastre suas contas</h3>
+      <p>Adicione suas contas bancárias e cartões de crédito em poucos minutos.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">2</div>
+      <h3>Lance suas movimentações</h3>
+      <p>Registre entradas e saídas com categoria, data e forma de pagamento.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">3</div>
+      <h3>Acompanhe os gráficos</h3>
+      <p>Visualize seu fluxo de caixa, gastos por categoria e evolução mensal.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">4</div>
+      <h3>Tome decisões melhores</h3>
+      <p>Com dados claros em mãos, controle seus gastos e aumente suas economias.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="planos">
+  <div class="reveal" style="text-align:center">
+    <div class="section-badge">Planos</div>
+    <h2 class="section-title">Um preço simples, <br>tudo incluído</h2>
+    <p class="section-sub" style="margin:0 auto">Sem surpresas, sem taxas ocultas. Acesso completo a todas as funcionalidades.</p>
+  </div>
+
+  <div style="display:flex;justify-content:center;margin-top:3rem">
+    <div class="reveal" style="background:#1e293b;border:2px solid #6366f1;border-radius:28px;padding:3rem;max-width:420px;width:100%;text-align:center;position:relative">
+
+      <!-- Badge destaque -->
+      <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;font-size:12px;font-weight:600;padding:5px 20px;border-radius:100px;white-space:nowrap">
+        Acesso completo
+      </div>
+
+      <div style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em">Plano Mensal</div>
+
+      <!-- Preço riscado -->
+      <div style="margin-bottom:0.4rem">
+        <span style="font-size:1.1rem;color:#475569;text-decoration:line-through">R$ 59,90/mês</span>
+        <span style="background:rgba(244,63,94,0.15);color:#fb7185;font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;margin-left:8px">-67%</span>
+      </div>
+
+      <!-- Preço promocional -->
+      <div style="display:flex;align-items:flex-start;justify-content:center;gap:4px;margin-bottom:0.5rem">
+        <span style="font-size:1.1rem;color:#94a3b8;margin-top:10px">R$</span>
+        <span style="font-family:'Sora',sans-serif;font-size:4rem;font-weight:800;color:#f1f5f9;line-height:1">19</span>
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:8px">
+          <span style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;color:#f1f5f9">,90</span>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#475569;margin-bottom:2rem">por mês · cancele quando quiser</div>
+
+      <ul style="list-style:none;text-align:left;display:flex;flex-direction:column;gap:12px;margin-bottom:2rem">
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Entradas e saídas ilimitadas
+        </li>
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Fluxo de caixa mensal com gráficos
+        </li>
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Categorias de gasto personalizadas
+        </li>
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Controle de cartões de crédito
+        </li>
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Custos fixos e variáveis
+        </li>
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Contas bancárias múltiplas
+        </li>
+        <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cbd5e1">
+          <span style="color:#10b981;font-weight:700;font-size:16px">✓</span> Suporte via WhatsApp
+        </li>
+      </ul>
+
+      <a href="https://wa.me/5531993146133?text=Ol%C3%A1!%20Quero%20contratar%20o%20Lumen%20Fintech%20por%20R%2419%2C90%2Fm%C3%AAs!" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#6366f1;color:#fff;border-radius:14px;padding:1rem;font-size:15px;font-weight:600;text-decoration:none;transition:background 0.2s" onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
+        Quero contratar →
+      </a>
+
+      <p style="font-size:12px;color:#334155;margin-top:1rem">Fale no WhatsApp e comece hoje mesmo</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA WHATSAPP -->
+<div class="wpp-section reveal" id="contato">
+  <div class="wpp-glow"></div>
+  <h2>Pronto para ter controle <br>total das suas finanças?</h2>
+  <p>Entre em contato pelo WhatsApp e saiba como começar a usar o Lumen Fintech hoje mesmo.</p>
+  <a href="https://wa.me/5531993146133?text=Ol%C3%A1!%20Tenho%20interesse%20no%20Lumen%20Fintech%20e%20gostaria%20de%20saber%20mais!" class="btn-wpp" target="_blank">
+    <span class="wpp-icon">📱</span>
+    Falar no WhatsApp agora
+  </a>
+</div>
+
+<footer>
+  <div class="logo">
+    <div class="logo-icon" style="width:28px;height:28px;font-size:13px">L</div>
+    <span class="logo-text">Lumen <span>Fintech</span></span>
+  </div>
+  <p>© 2025 Lumen Fintech. Todos os direitos reservados.</p>
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

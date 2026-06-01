@@ -3,83 +3,188 @@
 {% block title %}Login - Lumen Fintech{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-darkBg">
-    <div class="max-w-md w-full">
-        <!-- Logo e Cabeçalho -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4 shadow-lg shadow-primary/20">
-                <i class="ph-fill ph-lightning text-3xl text-white"></i>
-            </div>
-            <h1 class="text-3xl font-bold text-slate-800 dark:text-white">Bem-vindo de volta</h1>
-            <p class="text-slate-500 dark:text-slate-400 mt-2">Acesse sua conta para gerenciar o sistema</p>
+<style>
+    .login-bg {
+        min-height: 100vh;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .login-glow {
+        position: absolute;
+        top: -10%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 600px;
+        height: 400px;
+        background: radial-gradient(ellipse, rgba(99,102,241,0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .login-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 24px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        position: relative;
+        z-index: 1;
+    }
+    .login-logo-icon {
+        width: 52px; height: 52px;
+        background: #6366f1;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; font-weight: 800;
+        color: #fff;
+        font-family: 'Sora', sans-serif;
+        margin: 0 auto 1rem;
+    }
+    .login-input {
+        width: 100%;
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+        color: #e2e8f0 !important;
+        padding: 0.75rem 1rem 0.75rem 2.75rem !important;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .login-input::placeholder { color: #475569; }
+    .login-input:focus { border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important; }
+    .login-label { font-size: 13px; font-weight: 500; color: #94a3b8; margin-bottom: 6px; display: block; }
+    .login-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 18px; }
+    .login-btn {
+        width: 100%;
+        background: #6366f1;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 0.85rem;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .login-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+    .alert-error {
+        background: rgba(244,63,94,0.1);
+        border: 1px solid rgba(244,63,94,0.25);
+        color: #fb7185;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 13px;
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 1.5rem;
+    }
+    .alert-success {
+        background: rgba(16,185,129,0.1);
+        border: 1px solid rgba(16,185,129,0.25);
+        color: #34d399;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 13px;
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="login-bg">
+    <div class="login-glow"></div>
+
+    <div style="width:100%;max-width:420px;position:relative;z-index:1">
+
+        <!-- Logo -->
+        <div style="text-align:center;margin-bottom:2rem">
+            <div class="login-logo-icon">L</div>
+            <h1 style="font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:700;color:#f1f5f9;margin-bottom:4px">
+                Bem-vindo de volta
+            </h1>
+            <p style="font-size:14px;color:#64748b">
+                Acesse sua conta para gerenciar o sistema
+            </p>
         </div>
 
-        <!-- Card de Login -->
-        <div class="bg-white dark:bg-darkCard p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder">
-            
-            {# Mensagens de Erro (Ex: Senha incorreta ou Usuário não encontrado) #}
+        <!-- Card -->
+        <div class="login-card">
+
+            {# Mensagens de Erro #}
             {% if session_has('errors') %}
-                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm flex items-start gap-3">
-                    <i class="ph-fill ph-warning-circle text-lg mt-0.5"></i>
+                <div class="alert-error">
+                    <i class="ph-fill ph-warning-circle" style="font-size:16px;flex-shrink:0"></i>
                     <span>{{ session_get('errors')|first }}</span>
                 </div>
             {% endif %}
 
-            {# Mensagem de Logout ou Sucesso #}
+            {# Mensagem de Sucesso / Logout #}
             {% if session_has('success') %}
-                <div class="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-start gap-3">
-                    <i class="ph-fill ph-check-circle text-lg mt-0.5"></i>
+                <div class="alert-success">
+                    <i class="ph-fill ph-check-circle" style="font-size:16px;flex-shrink:0"></i>
                     <span>{{ session_get('success') }}</span>
                 </div>
             {% endif %}
 
-            <form action="/login" method="POST" class="space-y-6">
+            <form action="/login" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                <!-- Campo de E-mail -->
-                <div>
-                    <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">E-mail Corporativo</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                            <i class="ph ph-envelope-simple text-xl"></i>
-                        </div>
-                        <input type="email" id="email" name="email" required 
-                            class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
-                            placeholder="seu@email.com" value="{{ old['email'] ?? '' }}">
+                <!-- E-mail -->
+                <div style="margin-bottom:1.25rem">
+                    <label class="login-label" for="email">E-mail</label>
+                    <div style="position:relative">
+                        <i class="ph ph-envelope-simple login-icon"></i>
+                        <input
+                            type="email" id="email" name="email" required
+                            class="login-input"
+                            placeholder="seu@email.com"
+                            value="{{ old['email'] ?? '' }}"
+                        >
                     </div>
                 </div>
 
-                <!-- Campo de Senha -->
-                <div>
-                    <div class="flex justify-between mb-2">
-                        <label for="senha" class="text-sm font-medium text-slate-700 dark:text-slate-300">Senha</label>
-                        <a href="#" class="text-sm font-semibold text-primary hover:text-primaryHover transition-colors">Esqueceu a senha?</a>
+                <!-- Senha -->
+                <div style="margin-bottom:1.75rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                        <label class="login-label" for="senha" style="margin:0">Senha</label>
+                        <a href="#" style="font-size:12px;color:#6366f1;text-decoration:none">Esqueceu a senha?</a>
                     </div>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                            <i class="ph ph-lock-key text-xl"></i>
-                        </div>
-                        <input type="password" id="senha" name="senha" required
-                            class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
-                            placeholder="••••••••">
+                    <div style="position:relative">
+                        <i class="ph ph-lock-key login-icon"></i>
+                        <input
+                            type="password" id="senha" name="senha" required
+                            class="login-input"
+                            placeholder="••••••••"
+                        >
                     </div>
                 </div>
 
-                <!-- Botão de Entrar -->
-                <button type="submit" 
-                    class="w-full py-4 bg-primary hover:bg-primaryHover text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex justify-center items-center gap-2 group">
+                <!-- Botão -->
+                <button type="submit" class="login-btn">
                     <span>Entrar no Sistema</span>
-                    <i class="ph-bold ph-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    <i class="ph-bold ph-arrow-right"></i>
                 </button>
             </form>
         </div>
 
-        <a href="/primeiro-acesso" class="text-sm text-primary hover:underline">Primeiro acesso</a>
+        <!-- Links rodapé -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding:0 4px">
+            <a href="/" style="font-size:13px;color:#475569;text-decoration:none">
+                ← Voltar para home
+            </a>
+            <a href="/primeiro-acesso" style="font-size:13px;color:#6366f1;text-decoration:none">
+                Primeiro acesso
+            </a>
+        </div>
 
-        <!-- Rodapé da Auth -->
-        <p class="text-center mt-8 text-sm text-slate-500 dark:text-slate-400">
+        <p style="text-align:center;margin-top:1.5rem;font-size:12px;color:#334155">
             &copy; 2026 Lumen Fintech. Todos os direitos reservados.
         </p>
+
     </div>
 </div>
 {% endblock %}

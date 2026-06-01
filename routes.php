@@ -14,8 +14,11 @@ use App\Controller\UsuarioController;
 // A função simpleDispatcher é do FastRoute
 return FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     
-    // HOME 
-    $r->addRoute('GET', '/', ['App\Controller\HomeController', 'index']);
+    // HOME PÚBLICA
+    $r->addRoute('GET', '/', ['App\Controller\HomeController', 'home']);
+
+    // DASHBOARD (requer login)
+    $r->addRoute('GET', '/dashboard', ['App\Controller\HomeController', 'index']);
 
     //GAMBIARRA DE PRIMEIRO ACESSO
     $r->addRoute('GET', '/primeiro-acesso', ['App\Controller\AuthController', 'primeiroAcesso']);
@@ -62,6 +65,7 @@ return FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     $r->addRoute('POST', '/cartoes/criar', [CartaoCreditoController::class, 'store']);
     $r->addRoute('GET', '/cartoes/editar/{id:\d+}', [CartaoCreditoController::class, 'edit']);
     $r->addRoute('POST', '/cartoes/atualizar/{id:\d+}', [CartaoCreditoController::class, 'update']);
+    $r->addRoute('POST', '/cartoes/{id}/pagar-fatura', [CartaoCreditoController::class, 'pagarFatura']);
     $r->addRoute('POST', '/cartoes/excluir/{id:\d+}', [CartaoCreditoController::class, 'destroy']);
     // Rota para o Extrato Detalhado do Cartão
     $r->addRoute('GET', '/cartoes/extrato/{id:\d+}', [CartaoCreditoController::class, 'extrato']);

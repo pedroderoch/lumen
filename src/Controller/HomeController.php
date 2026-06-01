@@ -11,6 +11,16 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 class HomeController extends BaseController
 {
+    public function home(): void
+    {
+        // Se já está logado, manda direto pro dashboard
+        if (isset($_SESSION['user_id'])) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $this->render('home.html.twig');
+    }
     /**
      * TELA PRINCIPAL (DASHBOARD)
      */

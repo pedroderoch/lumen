@@ -19,6 +19,8 @@ class Lancamento extends Model
         'situacao_id',   // Controle de exclusão lógica (1: Ativo, 3: Excluído)
         'fornecedor_id',
         'descricao',
+        'parcela_atual',
+        'total_parcelas',
         'valor',
         'data_vencimento',
         'data_pagamento',

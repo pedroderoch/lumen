@@ -13,17 +13,19 @@
             Voltar para Cartões
         </a>
 
-        <!-- Seletor de Mês (Navegação da Fatura) -->
-        <div class="flex items-center bg-white dark:bg-darkCard p-2 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder">
-            <a href="/cartoes/extrato/{{ cartao.id }}?mes={{ mes_anterior }}&ano={{ ano_anterior }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                <i class="ph-bold ph-caret-left"></i>
-            </a>
-            <div class="px-6 text-center min-w-[140px]">
-                <span class="text-sm font-bold text-slate-800 dark:text-white capitalize">{{ titulo_mes }}</span>
+        <div class="flex items-center gap-3">
+            <!-- Seletor de Mês (Navegação da Fatura) -->
+            <div class="flex items-center bg-white dark:bg-darkCard p-2 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder">
+                <a href="/cartoes/extrato/{{ cartao.id }}?mes={{ mes_anterior }}&ano={{ ano_anterior }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <i class="ph-bold ph-caret-left"></i>
+                </a>
+                <div class="px-6 text-center min-w-[140px]">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white capitalize">{{ titulo_mes }}</span>
+                </div>
+                <a href="/cartoes/extrato/{{ cartao.id }}?mes={{ mes_proximo }}&ano={{ ano_proximo }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <i class="ph-bold ph-caret-right"></i>
+                </a>
             </div>
-            <a href="/cartoes/extrato/{{ cartao.id }}?mes={{ mes_proximo }}&ano={{ ano_proximo }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                <i class="ph-bold ph-caret-right"></i>
-            </a>
         </div>
     </div>
 
@@ -68,6 +70,14 @@
             </div>
             <p class="text-[10px] text-slate-400 font-medium italic">De um limite total de R$ {{ cartao.limite|number_format(2, ',', '.') }}</p>
         </div>
+
+        <!-- Botão Pagar Fatura -->
+            {% if compras|length > 0 %}
+            <button onclick="abrirModalPagarFatura()" class="flex items-center gap-2 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-sm transition-all hover:opacity-90 active:scale-95" style="background-color: {{ cartao.cor }}">
+                <i class="ph-bold ph-check-circle text-base"></i>
+                <span>Pagar Fatura</span>
+            </button>
+            {% endif %}
     </div>
 
     <!-- LISTAGEM DE MOVIMENTAÇÕES -->
@@ -139,14 +149,160 @@
         </div>
     </div>
 
+    <!-- MODAL PAGAR FATURA -->
+    <div id="modalPagarFatura" class="fixed inset-0 z-50 items-center justify-center p-4" style="display:none">
+
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onclick="fecharModalPagarFatura()"></div>
+
+        <!-- Modal -->
+        <div class="relative bg-white dark:bg-darkCard rounded-[2rem] shadow-2xl border border-slate-100 dark:border-darkBorder w-full max-w-md p-8">
+
+            <form method="POST" action="/cartoes/{{ cartao.id }}/pagar-fatura">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="mes" value="{{ mes }}">
+                <input type="hidden" name="ano" value="{{ ano }}">
+
+                <!-- Ícone + Título -->
+                <div class="flex flex-col items-center text-center gap-3 mb-6">
+
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl shadow-md"
+                        style="background-color: {{ cartao.cor }}">
+
+                        <i class="ph-bold ph-check-circle"></i>
+
+                    </div>
+
+                    <div>
+                        <h2 class="text-xl font-black text-slate-800 dark:text-white">
+                            Pagar Fatura
+                        </h2>
+
+                        <p class="text-xs text-slate-400 font-medium mt-1">
+                            {{ cartao.nome }} — {{ titulo_mes }}
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Resumo -->
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 flex flex-col gap-2 text-sm mb-6">
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 font-medium">Lançamentos</span>
+
+                        <span class="font-bold text-slate-700 dark:text-slate-300">
+                            {{ compras|length }} itens
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between items-center border-t border-slate-100 dark:border-darkBorder pt-2 mt-1">
+
+                        <span class="text-slate-500 font-medium">
+                            Total da Fatura
+                        </span>
+
+                        <span class="font-black text-rose-500 text-base">
+                            R$ {{ total_gasto|number_format(2, ',', '.') }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- Campo -->
+                <div class="flex flex-col gap-2 mb-6">
+
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        Data do Pagamento
+                    </label>
+
+                    <input
+                        type="date"
+                        id="dataPagamento"
+                        name="data_pagamento"
+                        value="{{ "now"|date("Y-m-d") }}"
+                        required
+                        class="w-full border border-slate-200 dark:border-darkBorder bg-white dark:bg-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-white outline-none focus:border-primary transition-all"
+                    />
+
+                </div>
+
+                <!-- Aviso -->
+                <p class="text-[11px] text-slate-400 text-center leading-relaxed mb-6">
+
+                    Todos os lançamentos desta fatura serão marcados como
+                    <strong>pagos</strong>.
+
+                </p>
+
+                <!-- Botões -->
+                <div class="flex gap-3">
+
+                    <button
+                        type="button"
+                        onclick="fecharModalPagarFatura()"
+                        class="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-darkBorder text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+
+                        Cancelar
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="flex-1 px-4 py-3 rounded-xl text-white text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                        style="background-color: {{ cartao.cor }}">
+
+                        Confirmar Pagamento
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
     <script>
         // Filtro rápido de tabela
         document.getElementById('filtroCompras').addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
+
             document.querySelectorAll('#tabelaCompras tbody tr').forEach(row => {
                 const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
+
+                row.style.display = text.includes(term)
+                    ? ''
+                    : 'none';
             });
+        });
+
+        // ── Modal Pagar Fatura ─────────────────────────────
+
+        function abrirModalPagarFatura() {
+
+            const hoje = new Date().toISOString().split('T')[0];
+
+            document.getElementById('dataPagamento').value = hoje;
+
+            document.getElementById('modalPagarFatura').style.display = 'flex';
+        }
+
+        function fecharModalPagarFatura() {
+
+            document.getElementById('modalPagarFatura').style.display = 'none';
+        }
+
+        // Fecha modal com ESC
+        document.addEventListener('keydown', function(e) {
+
+            if (e.key === 'Escape') {
+                fecharModalPagarFatura();
+            }
+
         });
     </script>
 {% endblock %}

@@ -83,6 +83,7 @@
                 <thead>
                     <tr class="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-darkBorder">
                         <th class="px-6 py-4 font-bold">Venc.</th>
+                        <th class="px-6 py-4 font-bold">Pag.</th>
                         <th class="px-6 py-4 font-bold">Descrição</th>
                         <th class="px-6 py-4 font-bold">Categoria</th>
                         <th class="px-6 py-4 font-bold">Favorecido</th>
@@ -96,6 +97,7 @@
                         {% set is_ent = lancamento.tipo == 'entrada' %}
                         <tr class="hover:bg-slate-50/30 transition-colors">
                             <td class="px-6 py-4 text-sm font-bold text-slate-700 dark:text-slate-200">{{ lancamento.data_vencimento|date('d/m') }}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-700 dark:text-slate-200">{{ lancamento.data_pagamento|date('d/m') }}</td>
                             
                             <td class="px-6 py-4 text-sm font-medium text-slate-800 dark:text-white">{{ lancamento.descricao }}</td>
 

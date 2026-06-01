@@ -86,6 +86,8 @@ class CartaoCreditoController extends BaseController
             'compras'           => $compras,
             'total_gasto'       => $totalGasto,
             'limite_disponivel' => $limiteDisponivel,
+            'mes'              => $mes,
+            'ano'              => $ano,
             'titulo_mes'        => $this->getNomeMes($mes) . " " . $ano,
             'mes_anterior'      => $anterior->format('m'),
             'ano_anterior'      => $anterior->format('Y'),
@@ -193,6 +195,35 @@ class CartaoCreditoController extends BaseController
         }
 
         header('Location: /cartoes');
+        exit;
+    }
+
+    public function pagarFatura($vars)
+    {
+        $usuarioId = $_SESSION['user_id'];
+
+        $cartaoId = $vars['id'];
+
+        $mes = $_POST['mes'];
+        $ano = $_POST['ano'];
+        $dataPagamento = $_POST['data_pagamento'];
+
+        Lancamento::where('usuario_id', $usuarioId)
+            ->where('cartao_id', $cartaoId)
+            ->where('forma_pagamento', 'cartao_credito')
+            ->where('tipo', 'saida')
+            ->whereMonth('data_vencimento', $mes)
+            ->whereYear('data_vencimento', $ano)
+            ->where('status', '!=', 'pago')
+            ->update([
+                'status' => 'pago',
+                'data_pagamento' => $dataPagamento
+            ]);
+
+        $_SESSION['success'] = 'Fatura paga com sucesso!';
+
+        header('Location: /cartoes/extrato/' . $cartaoId);
+
         exit;
     }
 }

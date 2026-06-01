@@ -27,7 +27,7 @@ class LancamentoController extends BaseController
                         ->whereMonth('data_vencimento', $mes)
                         ->whereYear('data_vencimento', $ano)
                         ->with(['categoria', 'conta', 'cartao', 'fornecedor'])
-                        ->orderBy('data_vencimento', 'asc')
+                        ->orderBy('data_transacao', 'desc')
                         ->get();
 
         $totais = [
@@ -107,28 +107,75 @@ class LancamentoController extends BaseController
         $formaPagamento = $_POST['forma_pagamento'] ?? 'pix';
         $cartaoId = ($formaPagamento === 'cartao_credito') ? ($_POST['cartao_id'] ?: null) : null;
 
-        Lancamento::create([
-            'usuario_id'      => $_SESSION['user_id'],
-            'descricao'       => $_POST['descricao'],
-            'fornecedor_id'   => $_POST['fornecedor_id'] ?: null,
-            'categoria_id'    => $_POST['categoria_id'],
-            'valor'           => $valor,
-            'tipo'            => $_POST['tipo'],
-            'forma_pagamento' => $formaPagamento,
-            'cartao_id'       => $cartaoId, // Captura do ID selecionado
-            'conta_id'        => $_POST['conta_id'] ?? null,
-            'data_transacao'  => $_POST['data_transacao'], // NOVO CAMPO
-            'data_vencimento' => $_POST['data_vencimento'],
-            'data_pagamento'  => $_POST['status'] === 'pago' ? ($_POST['data_pagamento'] ?: date('Y-m-d')) : null,
-            'status'          => $_POST['status'] ?? 'aberto',
-            'situacao_id'     => 1,
-            'observacao'      => $_POST['observacao'] ?? null
-        ]);
+        // Recupera o número de parcelas enviadas pelo formulário
+        $totalParcelas = isset($_POST['total_parcelas']) ? (int)$_POST['total_parcelas'] : 1;
+
+        if ($totalParcelas > 1) {
+            $dataVencimentoBase = new \DateTime($_POST['data_vencimento']);
+            $descricaoBase = $_POST['descricao'];
+
+            for ($i = 0; $i < $totalParcelas; $i++) {
+                $vencimento = clone $dataVencimentoBase;
+                if ($i > 0) {
+                    $vencimento->modify('+' . $i . ' month');
+                }
+
+                $numParcela = $i + 1;
+                $descricaoFinal = $descricaoBase . " (" . str_pad($numParcela, 2, '0', STR_PAD_LEFT) . "/" . str_pad($totalParcelas, 2, '0', STR_PAD_LEFT) . ")";
+                
+                // Regra para parcelas futuras nascerem abertas
+                $statusFinal = ($i === 0) ? ($_POST['status'] ?? 'aberto') : 'aberto';
+                $pagamentoFinal = ($i === 0 && $statusFinal === 'pago') ? ($_POST['data_pagamento'] ?: date('Y-m-d')) : null;
+
+                // Salva o valor exato preenchido em todas as parcelas, sem divisão matemática
+                Lancamento::create([
+                    'usuario_id'      => $_SESSION['user_id'],
+                    'descricao'       => $descricaoFinal,
+                    'fornecedor_id'   => $_POST['fornecedor_id'] ?: null,
+                    'categoria_id'    => $_POST['categoria_id'],
+                    'valor'           => $valor,
+                    'tipo'            => $_POST['tipo'],
+                    'forma_pagamento' => $formaPagamento,
+                    'cartao_id'       => $cartaoId, 
+                    'conta_id'        => $_POST['conta_id'] ?? null,
+                    'data_transacao'  => $_POST['data_transacao'], 
+                    'data_vencimento' => $vencimento->format('Y-m-d'),
+                    'data_pagamento'  => $pagamentoFinal,
+                    'status'          => $statusFinal,
+                    'situacao_id'     => 1,
+                    'observacao'      => $_POST['observacao'] ?? null,
+                    'parcela_atual'   => $numParcela,
+                    'total_parcelas'  => $totalParcelas
+                ]);
+            }
+        } else {
+            // Lançamento normal à vista (total_parcelas = 1)
+            Lancamento::create([
+                'usuario_id'      => $_SESSION['user_id'],
+                'descricao'       => $_POST['descricao'],
+                'fornecedor_id'   => $_POST['fornecedor_id'] ?: null,
+                'categoria_id'    => $_POST['categoria_id'],
+                'valor'           => $valor,
+                'tipo'            => $_POST['tipo'],
+                'forma_pagamento' => $formaPagamento,
+                'cartao_id'       => $cartaoId, 
+                'conta_id'        => $_POST['conta_id'] ?? null,
+                'data_transacao'  => $_POST['data_transacao'], 
+                'data_vencimento' => $_POST['data_vencimento'],
+                'data_pagamento'  => $_POST['status'] === 'pago' ? ($_POST['data_pagamento'] ?: date('Y-m-d')) : null,
+                'status'          => $_POST['status'] ?? 'aberto',
+                'situacao_id'     => 1,
+                'observacao'      => $_POST['observacao'] ?? null,
+                'parcela_atual'   => 1,
+                'total_parcelas'  => 1
+            ]);
+        }
 
         session_flash('success', 'Lançamento registrado com sucesso!');
         header('Location: /lancamentos');
         exit;
     }
+
 
     /**
      * GET /lancamentos/editar/{id}
@@ -145,11 +192,12 @@ class LancamentoController extends BaseController
 
         $this->render('lancamentos_form.html.twig', [
             'lancamento'   => $lancamento,
-            'categorias'   => Categoria::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
+            'categorias'   => Categoria::where('usuario_id', $usuarioId)->where('situacao_id', 1)->orderBy('nome', 'ASC')->get(),
             'contas'       => ContaBancaria::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
             'cartoes'      => CartaoCredito::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
-            'fornecedores' => Fornecedor::where('usuario_id', $usuarioId)->where('situacao_id', 1)->get(),
-            'situacoes'    => Situacao::all()
+            'fornecedores' => Fornecedor::where('usuario_id', $usuarioId)->where('situacao_id', 1)->orderBy('nome', 'ASC')->get(),
+            'situacoes'    => Situacao::all(),
+            'cartoes_ativos' => $this->getCartoesAtivos($usuarioId)
         ]);
     }
 
@@ -213,6 +261,9 @@ class LancamentoController extends BaseController
         exit;
     }
 
+    /**
+     * Busca cartões ativos do usuário
+     */
     private function getCartoesAtivos(int $userId)
     {
 

@@ -45,6 +45,7 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 // 2. Rotas que NÃO precisam de login
 // $rotasPublicas = ['/login'];
 $rotasPublicas = [
+    '/',
     '/login',
     '/autenticar',
     '/primeiro-acesso'

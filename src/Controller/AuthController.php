@@ -15,7 +15,7 @@ class AuthController extends BaseController
     {
         // Se o usuário já estiver logado, não precisa ver o login, manda para o dash
         if (isset($_SESSION['user_id'])) {
-            header('Location: /');
+            header('Location: /dashboard');
             exit;
         }
 
@@ -155,7 +155,7 @@ class AuthController extends BaseController
             session_flash('success', "Bem-vindo ao sistema, {$usuario->nome}!");
             
             // Redireciona para o Dashboard (raiz do localhost)
-            header('Location: /'); 
+            header('Location: /dashboard'); 
             exit;
         }
 
@@ -185,7 +185,7 @@ class AuthController extends BaseController
         }
         
         session_flash('success', 'Sessão encerrada com segurança.');
-        header('Location: /login');
+        header('Location: /');
         exit;
     }
 }

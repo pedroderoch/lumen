@@ -3,6 +3,11 @@
 // 1. Inclui o autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Timezone — Brasil (Horário de Brasília)
+// Sem isso o Carbon usa UTC e as datas ficam erradas
+date_default_timezone_set('America/Sao_Paulo');
+\Illuminate\Support\Carbon::setLocale('pt_BR');
+
 // 2. Importa o "Capsule" do Eloquent
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Filesystem\Filesystem;

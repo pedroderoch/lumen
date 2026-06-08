@@ -196,16 +196,23 @@ class HomeController extends BaseController
             ->where('situacao_id', 1)
             ->get();
 
+        $dataFatura = new \DateTime(); // Pega a data de hoje
+        $dataFatura->modify('+1 month'); // Avança 1 mês (se for Dez/2025, vira Jan/2026 automático)
+        
+        $mesFatura = $dataFatura->format('m');
+        $anoFatura = $dataFatura->format('Y');
+
         foreach ($cartoes as $cartao) {
 
             $cartao->fatura_atual = Lancamento::where('usuario_id', $userId)
                 ->where('tipo', 'saida')
                 ->where('forma_pagamento', 'cartao_credito')
                 ->where('cartao_id', $cartao->id)
+                ->whereMonth('data_vencimento', $mesFatura) // Filtra o mês (+1)
+                ->whereYear('data_vencimento', $anoFatura)  // Filtra o ano ajustado
                 ->where('situacao_id', 1)
                 ->sum('valor');
         }
-
         return $cartoes;
     }
 

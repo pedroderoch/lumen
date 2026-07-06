@@ -45,6 +45,7 @@ class HomeController extends BaseController
             'ultimos_lancamentos' => $this->getBuscaUltimosLancamentos($usuarioId),
             'mes_atual' => $this->getMesAtualExtenso(),
             'fluxo_caixa' => $this->getFluxoCaixaMeses($usuarioId),
+            'grafico_distribuicao' => $this->getGraficoDistribuicao($usuarioId),
         ];
 
         $this->render('dashboard.html.twig', $dados);
@@ -335,6 +336,47 @@ class HomeController extends BaseController
         }
 
         return $resultado;
+    }
+
+    private function getGraficoDistribuicao(int $userId): array
+    {
+        $mes = (int) date('m');
+        $ano = (int) date('Y');
+
+        $base = Lancamento::join('categorias', 'categorias.id', '=', 'lancamentos.categoria_id')
+            ->where('lancamentos.usuario_id', $userId)
+            ->where('lancamentos.tipo', 'saida')
+            ->where('lancamentos.situacao_id', 1)
+            ->whereMonth('lancamentos.data_vencimento', $mes)
+            ->whereYear('lancamentos.data_vencimento', $ano);
+
+        $investimentos = (clone $base)
+            ->where('lancamentos.categoria_id', 25)
+            ->sum('lancamentos.valor');
+
+        $lazer = (clone $base)
+            ->where('lancamentos.categoria_id', 10)
+            ->sum('lancamentos.valor');
+
+        $fixo = (clone $base)
+            ->whereNotIn('lancamentos.categoria_id', [25, 10, 21])
+            ->where('categorias.natureza', 'fixo')
+            ->sum('lancamentos.valor');
+
+        $variavel = (clone $base)
+            ->whereNotIn('lancamentos.categoria_id', [25, 10, 21])
+            ->where('categorias.natureza', 'variavel')
+            ->sum('lancamentos.valor');
+
+        $fixoMaisVariavel = $fixo + $variavel;
+
+        return [
+            'investimentos' => round($investimentos, 2),
+            'lazer'         => round($lazer, 2),
+            'fixo'          => round($fixo, 2),
+            'variavel'      => round($variavel, 2),
+            'fixoVariavel'  => round($fixoMaisVariavel, 2),
+        ];
     }
 
 

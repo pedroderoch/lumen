@@ -10,6 +10,7 @@ use App\Controller\FornecedorController;
 use App\Controller\LancamentoController;
 use App\Controller\HomeController;
 use App\Controller\UsuarioController;
+use App\Controller\PlanejamentoController;
 
 // A função simpleDispatcher é do FastRoute
 return FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
@@ -39,6 +40,15 @@ return FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     $r->addRoute('POST', '/caixinhas/movimentar', ['App\Controller\CaixinhaController', 'movimentar']);
     // No seu public/index.php
     $r->addRoute('GET', '/caixinhas/show/{id:\d+}', ['App\Controller\CaixinhaController', 'show']);
+
+    // ROTAS DE PLANEJAMENTO FINANCEIRO
+    $r->addRoute('GET', '/planejamento', [PlanejamentoController::class, 'list']);
+    $r->addRoute('GET', '/planejamento/{id:\d+}', [PlanejamentoController::class, 'show']);
+    $r->addRoute('GET', '/planejamento/cadastrar', [PlanejamentoController::class, 'create']);
+    $r->addRoute('POST', '/planejamento/criar', [PlanejamentoController::class, 'store']);
+    $r->addRoute('GET', '/planejamento/editar/{id:\d+}', [PlanejamentoController::class, 'edit']);
+    $r->addRoute('POST', '/planejamento/atualizar/{id:\d+}', [PlanejamentoController::class, 'update']);
+    $r->addRoute('POST', '/planejamento/excluir/{id:\d+}', [PlanejamentoController::class, 'destroy']);
 
     // ROTAS DE FORNECEDORES
     $r->addRoute('GET', '/fornecedores', [FornecedorController::class, 'list']);

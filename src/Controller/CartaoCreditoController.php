@@ -42,10 +42,10 @@ class CartaoCreditoController extends BaseController
         // ]);
     }
 
-    /**
-     * GET /cartoes/extrato/{id}
-     * Exibe as compras detalhadas de um cartão específico no mês selecionado
-     */
+   /**
+ * GET /cartoes/extrato/{id}
+ * Exibe as compras detalhadas de um cartão específico no mês selecionado
+ */
     public function extrato(array $params): void
     {
         $usuarioId = $_SESSION['user_id'];
@@ -60,8 +60,28 @@ class CartaoCreditoController extends BaseController
             exit;
         }
 
-        $mes = isset($_GET['mes']) ? (int)$_GET['mes'] : (int)date('m');
-        $ano = isset($_GET['ano']) ? (int)$_GET['ano'] : (int)date('Y');
+        if (isset($_GET['mes']) && isset($_GET['ano'])) {
+            // Navegação manual pelo usuário
+            $mes = (int)$_GET['mes'];
+            $ano = (int)$_GET['ano'];
+        } else {
+            // Calcula automaticamente a fatura aberta com base no dia de fechamento
+            $hoje     = (int)date('d');
+            $mesAtual = (int)date('m');
+            $anoAtual = (int)date('Y');
+
+            if ($hoje > $cartao->dia_fechamento) {
+                // Fatura já fechou, mostra a próxima
+                $dataProxima = new \DateTime("$anoAtual-$mesAtual-01");
+                $dataProxima->modify('+1 month');
+                $mes = (int)$dataProxima->format('m');
+                $ano = (int)$dataProxima->format('Y');
+            } else {
+                // Ainda dentro do período da fatura atual
+                $mes = $mesAtual;
+                $ano = $anoAtual;
+            }
+        }
 
         // Busca todos os lançamentos vinculados a este cartão neste período
         $compras = Lancamento::where('cartao_id', $cartaoId)
@@ -76,18 +96,18 @@ class CartaoCreditoController extends BaseController
         $totalGasto = $compras->sum('valor');
         $limiteDisponivel = $cartao->limite - $totalGasto;
 
-        //Lógica de Navegação (Mês anterior/próximo)
-        $dataRef = new \DateTime("$ano-$mes-01");
+        // Lógica de Navegação (Mês anterior/próximo)
+        $dataRef  = new \DateTime("$ano-$mes-01");
         $anterior = (clone $dataRef)->modify('-1 month');
-        $proximo = (clone $dataRef)->modify('+1 month');
+        $proximo  = (clone $dataRef)->modify('+1 month');
 
         $this->render('cartoes_extrato.html.twig', [
             'cartao'            => $cartao,
             'compras'           => $compras,
             'total_gasto'       => $totalGasto,
             'limite_disponivel' => $limiteDisponivel,
-            'mes'              => $mes,
-            'ano'              => $ano,
+            'mes'               => $mes,
+            'ano'               => $ano,
             'titulo_mes'        => $this->getNomeMes($mes) . " " . $ano,
             'mes_anterior'      => $anterior->format('m'),
             'ano_anterior'      => $anterior->format('Y'),

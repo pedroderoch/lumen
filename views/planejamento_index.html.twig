@@ -7,254 +7,290 @@
 
 {% block content %}
 
-    <!-- NAVEGAÇÃO DE MÊS (Igual aos Lançamentos) -->
-    <div class="flex items-center justify-between bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder mb-6 max-w-2xl mx-auto">
-        <a href="/planejamento{{ link_anterior }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-            <i class="ph-bold ph-caret-left text-xl"></i>
-        </a>
-        
-        <div class="text-center px-4">
-            <h3 class="text-lg sm:text-xl font-bold text-primary dark:text-indigo-400 capitalize m-0">{{ titulo_mes|default('Mês Atual') }}</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Orçamento Mensal</p>
-        </div>
-
-        <a href="/planejamento{{ link_proximo }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-            <i class="ph-bold ph-caret-right text-xl"></i>
-        </a>
-    </div>
-
     <form action="/planejamento/salvar" method="POST" id="form-planejamento">
-        <!-- BLOCO SUPERIOR: RECEITA E DISTRIBUIÇÃO GERAL -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- ENTRADA DE DADOS -->
         <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 sm:p-8 mb-8 relative overflow-hidden">
             <!-- Fundo Decorativo -->
             <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
-                
-                <!-- Definir Receita -->
-                <div class="flex flex-col justify-center">
-                    <label for="receita_base" class="block text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                        <i class="ph-fill ph-wallet text-primary mr-1"></i> Receita Estimada do Mês
-                    </label>
-                    <div class="relative max-w-sm">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span class="text-xl font-bold text-slate-400">R$</span>
+            <div class="relative z-10">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Seus dados</h3>
+                <p class="text-sm text-slate-400 dark:text-slate-500 mb-6">Informe seu salário para calcularmos suas metas automaticamente</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    <!-- Salário -->
+                    <div>
+                        <label for="salario" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Salário mensal
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 text-sm font-medium">R$</span>
+                            <input
+                                type="text"
+                                id="salario"
+                                name="salario"
+                                inputmode="decimal"
+                                placeholder="0,00"
+                                {# value="{{ planejamento.salario ?? '' }}" #}
+                                value="{{ 5850.00 }}"
+                                class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                            >
                         </div>
-                        <input type="text" id="receita_base" name="receita_base" value="{{ receita_base|default('0,00') }}" required onkeyup="formatarMoeda(this); calcularTudo();"
-                            class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-3xl font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
                     </div>
-                    <p class="text-xs text-slate-500 mt-2">Diga ao sistema quanto espera ganhar este mês para fatiar o orçamento.</p>
+
+                    <!-- Caixinha vinculada à Reserva de Emergência -->
+                    <div>
+                        <label for="caixinha_reserva_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Caixinha da reserva de emergência
+                        </label>
+                        <select
+                            id="caixinha_reserva_id"
+                            name="caixinha_reserva_id"
+                            class="w-full py-3 px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        >
+                            <option value="">Nenhuma — não acompanhar</option>
+                            {% for caixinha in caixinhas %}
+                                <option
+                                    value="{{ caixinha.id }}"
+                                    data-valor-atual="{{ caixinha.valor_atual }}"
+                                    {% if planejamento.caixinha_reserva_id == caixinha.id %}selected{% endif %}
+                                >
+                                    {{ caixinha.nome }} (R$ {{ caixinha.valor_atual|number_format(2, ',', '.') }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">O valor atual da caixinha é buscado automaticamente</p>
+                    </div>
+
                 </div>
 
-                <!-- Resumo da Distribuição -->
-                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700">
-                    <div class="flex justify-between items-end mb-2">
-                        <div>
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Distribuído</p>
-                            <h4 id="display_percentual_total" class="text-2xl font-bold text-emerald-500">0%</h4>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Falta Alocar</p>
-                            <h4 id="display_valor_restante" class="text-lg font-bold text-slate-700 dark:text-slate-300">R$ 0,00</h4>
-                        </div>
+                <!-- Total acumulado em todas as caixinhas (Liberdade Financeira) -->
+                <div class="mt-5 flex items-center gap-3 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl px-5 py-4">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                        <i class="ph-fill ph-piggy-bank text-lg text-indigo-500"></i>
                     </div>
-                    
-                    <!-- Barra de Progresso Geral -->
-                    <div class="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-3">
-                        <div id="barra_progresso_total" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+                    <div>
+                        <p class="text-xs text-indigo-500/80 dark:text-indigo-300/80 font-medium">Patrimônio total (soma de todas as caixinhas)</p>
+                        <p class="text-lg font-bold text-indigo-600 dark:text-indigo-300">
+                            R$ {{ total_caixinhas|default(0)|number_format(2, ',', '.') }}
+                        </p>
                     </div>
-                    
-                    <p id="msg_alerta_limite" class="text-xs font-bold text-rose-500 mt-2 hidden">
-                        <i class="ph-bold ph-warning-circle"></i> Atenção: Você ultrapassou 100% da sua receita!
-                    </p>
                 </div>
+
+                {% if caixinhas is empty %}
+                    <div class="mt-5 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-2xl px-4 py-3">
+                        <i class="ph-fill ph-info"></i>
+                        Você ainda não tem caixinhas cadastradas.
+                        <a href="/caixinhas/cadastrar" class="font-semibold underline">Criar uma agora</a>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- BLOCO INFERIOR: CATEGORIAS (Os "Envelopes") -->
-        <div class="flex items-center justify-between mb-4 px-2">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Os seus "Envelopes"</h3>
-            <button type="submit" id="btn_salvar" class="px-6 py-2.5 bg-primary hover:bg-primaryHover text-white text-sm font-bold rounded-xl shadow-sm shadow-indigo-200 dark:shadow-none transition-colors flex items-center gap-2">
-                <i class="ph-bold ph-floppy-disk text-lg"></i> Salvar Planejamento
-            </button>
-        </div>
+                <!-- METAS CALCULADAS -->
+        <div id="metas-container" class="hidden" data-total-caixinhas="{{ total_caixinhas|default(0) }}">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
-            {% for item in itens_planejamento %}
-                
-                <!-- Card do Envelope -->
-                <div class="bg-white dark:bg-darkCard p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder envelope-item">
-                    
-                    <input type="hidden" name="categoria_id[]" value="{{ item.categoria.id }}">
-                    
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style="background-color: {{ item.categoria.cor }}">
-                                <i class="ph-fill {{ item.categoria.icone }} text-xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">{{ item.categoria.nome }}</h4>
-                                <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded {{ item.categoria.comportamento == 'fixo' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600' }}">
-                                    {{ item.categoria.comportamento == 'fixo' ? 'Custo Fixo' : 'Variável' }}
-                                </span>
-                            </div>
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Suas metas calculadas</h3>
+                <button type="submit" class="text-sm font-semibold text-primary hover:text-primaryHover transition-colors flex items-center gap-1.5">
+                    <i class="ph-bold ph-floppy-disk"></i>
+                    Salvar planejamento
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                <!-- CARD: Patrimônio p/ Liberdade Financeira -->
+                <div class="meta-card bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 relative overflow-hidden">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                            <i class="ph-fill ph-crown-simple text-xl text-indigo-500"></i>
                         </div>
-                        
-                        <!-- Input Porcentagem -->
-                        <div class="flex items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                            <input type="number" name="percentual[]" value="{{ item.percentual }}" min="0" max="100" step="1" 
-                                class="w-12 bg-transparent text-center text-sm font-bold text-slate-800 dark:text-white outline-none input-percentual">
-                            <span class="text-slate-400 font-bold text-sm pr-2">%</span>
-                        </div>
+                        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Longo prazo</span>
                     </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Patrimônio para viver de renda</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-white mb-3" data-meta="liberdade">R$ 0,00</p>
 
-                    <!-- Slider -->
-                    <div class="mb-4 px-1">
-                        <input type="range" min="0" max="100" value="{{ item.percentual }}" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary slider-percentual">
+                    <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-2">
+                        <div class="h-full rounded-full bg-indigo-500 transition-all duration-700" data-bar="liberdade" style="width:0%"></div>
                     </div>
-
-                    <!-- Resumo Financeiro da Categoria -->
-                    <div class="flex justify-between items-end border-t border-slate-50 dark:border-darkBorder pt-3 mt-2">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Limite Planejado</p>
-                            <p class="text-base font-bold text-slate-800 dark:text-white display-valor-calculado">R$ 0,00</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Gasto até agora</p>
-                            <p class="text-sm font-bold text-rose-500" data-gasto="{{ item.gasto_atual }}">R$ {{ item.gasto_atual|number_format(2, ',', '.') }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Mini Barra de Progresso (Gasto vs Planejado) -->
-                    <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-2">
-                        <div class="h-full barra-gasto-categoria transition-all" style="width: 0%; background-color: {{ item.categoria.cor }}"></div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400 dark:text-slate-500">Você tem <span class="font-semibold text-slate-600 dark:text-slate-300" data-atual="liberdade">R$ 0,00</span></span>
+                        <span class="font-semibold text-indigo-500" data-pct="liberdade">0%</span>
                     </div>
                 </div>
 
-            {% endfor %}
+                <!-- CARD: Investimento mensal -->
+                <div class="meta-card bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 relative overflow-hidden">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                            <i class="ph-fill ph-trend-up text-xl text-emerald-500"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Mensal</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Investir por mês p/ chegar à meta</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-white mb-3" data-meta="investir_mensal">R$ 0,00</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">20% do seu salário, todo mês, sem falhar</p>
+                </div>
+
+                <!-- CARD: Reserva de emergência -->
+                <div class="meta-card bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 relative overflow-hidden">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+                            <i class="ph-fill ph-shield-check text-xl text-amber-500"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Segurança</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Reserva de emergência (6x salário)</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-white mb-3" data-meta="reserva">R$ 0,00</p>
+
+                    <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-2">
+                        <div class="h-full rounded-full bg-amber-500 transition-all duration-700" data-bar="reserva" style="width:0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400 dark:text-slate-500">Você tem <span class="font-semibold text-slate-600 dark:text-slate-300" data-atual="reserva">R$ 0,00</span></span>
+                        <span class="font-semibold text-amber-500" data-pct="reserva">0%</span>
+                    </div>
+                </div>
+
+                <!-- CARD: Lazer -->
+                <div class="meta-card bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 relative overflow-hidden">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center">
+                            <i class="ph-fill ph-confetti text-xl text-rose-500"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Mensal</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Limite para lazer</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-white mb-3" data-meta="lazer">R$ 0,00</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">30% do salário, sem culpa</p>
+                </div>
+
+                <!-- CARD: Gastos Fixos -->
+                <div class="meta-card bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder p-6 relative overflow-hidden">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center">
+                            <i class="ph-fill ph-house-line text-xl text-sky-500"></i>
+                        </div>
+                        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Mensal</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Limite máximo p/ gastos fixos</p>
+                    <p class="text-2xl font-bold text-slate-800 dark:text-white mb-3" data-meta="fixos">R$ 0,00</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">50% do salário (aluguel, contas, etc)</p>
+                </div>
+
+            </div>
         </div>
+
+        <!-- ESTADO VAZIO -->
+        <div id="estado-vazio" class="text-center py-16">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                <i class="ph-fill ph-calculator text-3xl text-slate-400"></i>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 font-medium">Informe seu salário acima</p>
+            <p class="text-sm text-slate-400 dark:text-slate-500">Suas metas serão calculadas automaticamente</p>
+        </div>
+
     </form>
 
     <!-- SCRIPTS MÁGICOS DE CÁLCULO -->
     <script>
-        // Função para formatar o input da Receita Base (moeda)
-        function formatarMoeda(i) {
-            var v = i.value.replace(/\D/g,'');
-            v = (v/100).toFixed(2) + '';
-            v = v.replace(".", ",");
-            v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-            v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
-            i.value = v;
-        }
+        (function () {
+            const inputSalario  = document.getElementById('salario');
+            const selectReserva = document.getElementById('caixinha_reserva_id');
+            const container     = document.getElementById('metas-container');
+            const estadoVazio   = document.getElementById('estado-vazio');
+            const totalCaixinhas = parseFloat(container.dataset.totalCaixinhas || '0');
 
-        // Converte string BRL (ex: 1.500,00) para Float do JS (1500.00)
-        function getReceitaBaseFloat() {
-            let str = document.getElementById('receita_base').value;
-            if(!str) return 0;
-            str = str.replace(/\./g, '').replace(',', '.');
-            return parseFloat(str) || 0;
-        }
+            function parseValor(str) {
+                if (!str) return 0;
+                // aceita "1.234,56" ou "1234.56" ou "1234,56"
+                const limpo = str.toString()
+                    .replace(/[^\d,.-]/g, '')
+                    .replace(/\.(?=\d{3}(\D|$))/g, '') // remove ponto de milhar
+                    .replace(',', '.');
+                const num = parseFloat(limpo);
+                return isNaN(num) ? 0 : num;
+            }
 
-        // Formata Float do JS para String BRL
-        function formatMoneyBR(valor) {
-            return "R$ " + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+            function formatarMoeda(valor) {
+                return 'R$ ' + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
 
-        // A grande função que calcula tudo em tempo real
-        function calcularTudo() {
-            const receitaBase = getReceitaBaseFloat();
-            const envelopes = document.querySelectorAll('.envelope-item');
-            let totalPercentual = 0;
+            function setMeta(chave, valor) {
+                const el = document.querySelector(`[data-meta="${chave}"]`);
+                if (el) el.textContent = formatarMoeda(valor);
+            }
 
-            envelopes.forEach(envelope => {
-                const inputPerc = envelope.querySelector('.input-percentual');
-                const slider = envelope.querySelector('.slider-percentual');
-                const displayValor = envelope.querySelector('.display-valor-calculado');
-                const barraGasto = envelope.querySelector('.barra-gasto-categoria');
-                const gastoAtual = parseFloat(envelope.querySelector('[data-gasto]').getAttribute('data-gasto'));
+            function valorAtualDoSelect(select) {
+                if (!select || !select.value) return 0;
+                const opcao = select.options[select.selectedIndex];
+                return parseFloat(opcao.dataset.valorAtual || '0');
+            }
 
-                // Garante sincronia entre slider e input
-                let percentual = parseFloat(inputPerc.value) || 0;
-                
-                // Calcula o valor em R$ que essa porcentagem representa
-                let valorCalculado = (receitaBase * percentual) / 100;
-                displayValor.innerText = formatMoneyBR(valorCalculado);
+            function setProgresso(chave, atual, meta) {
+                const pct = meta > 0 ? Math.min((atual / meta) * 100, 100) : 0;
+                const bar = document.querySelector(`[data-bar="${chave}"]`);
+                const pctEl = document.querySelector(`[data-pct="${chave}"]`);
+                const atualEl = document.querySelector(`[data-atual="${chave}"]`);
 
-                // Calcula como está o progresso do gasto em relação ao planejado!
-                if(valorCalculado > 0) {
-                    let percGasto = (gastoAtual / valorCalculado) * 100;
-                    if(percGasto > 100) percGasto = 100; // Trava a barra visual em 100%
-                    barraGasto.style.width = percGasto + "%";
-                    // Fica vermelho se estourou o limite!
-                    if(percGasto >= 100) barraGasto.classList.add('bg-rose-500');
-                    else barraGasto.classList.remove('bg-rose-500');
-                } else {
-                    barraGasto.style.width = "0%";
+                if (bar) bar.style.width = pct.toFixed(1) + '%';
+                if (pctEl) pctEl.textContent = pct.toFixed(0) + '%';
+                if (atualEl) atualEl.textContent = formatarMoeda(atual);
+            }
+
+            function calcular() {
+                const salario = parseValor(inputSalario.value);
+
+                if (salario <= 0) {
+                    container.classList.add('hidden');
+                    estadoVazio.classList.remove('hidden');
+                    return;
                 }
 
-                totalPercentual += percentual;
-            });
+                container.classList.remove('hidden');
+                estadoVazio.classList.add('hidden');
 
-            // Atualiza Resumo Global
-            const displayTotalPerc = document.getElementById('display_percentual_total');
-            const displayValorRestante = document.getElementById('display_valor_restante');
-            const barraTotal = document.getElementById('barra_progresso_total');
-            const alerta = document.getElementById('msg_alerta_limite');
-            const btnSalvar = document.getElementById('btn_salvar');
+                const metaLiberdade   = salario * 120;
+                const investirMensal  = salario * 0.2;
+                const metaReserva     = salario * 6;
+                const lazer           = salario * 0.3;
+                const fixos           = salario / 2;
 
-            displayTotalPerc.innerText = totalPercentual + "%";
-            
-            let valorRestante = receitaBase - ((receitaBase * totalPercentual) / 100);
-            displayValorRestante.innerText = formatMoneyBR(valorRestante);
+                setMeta('liberdade', metaLiberdade);
+                setMeta('investir_mensal', investirMensal);
+                setMeta('reserva', metaReserva);
+                setMeta('lazer', lazer);
+                setMeta('fixos', fixos);
 
-            // Regras Visuais e Bloqueios
-            if(totalPercentual > 100) {
-                barraTotal.style.width = "100%";
-                barraTotal.classList.replace('bg-emerald-500', 'bg-rose-500');
-                displayTotalPerc.classList.replace('text-emerald-500', 'text-rose-500');
-                alerta.classList.remove('hidden');
-                btnSalvar.disabled = true;
-                btnSalvar.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                barraTotal.style.width = totalPercentual + "%";
-                barraTotal.classList.replace('bg-rose-500', 'bg-emerald-500');
-                displayTotalPerc.classList.replace('text-rose-500', 'text-emerald-500');
-                alerta.classList.add('hidden');
-                btnSalvar.disabled = false;
-                btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
+                // Reserva compara com a caixinha selecionada
+                const atualReserva = valorAtualDoSelect(selectReserva);
+                setProgresso('reserva', atualReserva, metaReserva);
+
+                // Liberdade financeira compara com a soma de TODAS as caixinhas
+                setProgresso('liberdade', totalCaixinhas, metaLiberdade);
             }
-        }
 
-        // Ligar os eventos (Sincronizar Slider <-> Input Numérico)
-        document.addEventListener("DOMContentLoaded", () => {
-            const envelopes = document.querySelectorAll('.envelope-item');
-            
-            envelopes.forEach(envelope => {
-                const inputPerc = envelope.querySelector('.input-percentual');
-                const slider = envelope.querySelector('.slider-percentual');
-
-                // Se mexer no input, atualiza o slider e calcula
-                inputPerc.addEventListener('input', (e) => {
-                    let val = e.target.value;
-                    if(val > 100) val = 100;
-                    if(val < 0) val = 0;
-                    e.target.value = val;
-                    slider.value = val;
-                    calcularTudo();
+            // Máscara simples de moeda ao digitar
+            function aplicarMascara(input) {
+                input.addEventListener('input', function () {
+                    let v = this.value.replace(/\D/g, '');
+                    v = (parseInt(v || '0', 10) / 100).toFixed(2) + '';
+                    v = v.replace('.', ',');
+                    v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    this.value = v;
+                    calcular();
                 });
+            }
 
-                // Se mexer no slider, atualiza o input e calcula
-                slider.addEventListener('input', (e) => {
-                    inputPerc.value = e.target.value;
-                    calcularTudo();
-                });
-            });
+            aplicarMascara(inputSalario);
+            selectReserva.addEventListener('change', calcular);
 
-            // Disparar o cálculo na primeira vez que a página carrega
-            calcularTudo();
-        });
+            // Calcula ao carregar (caso já existam valores salvos)
+            calcular();
+        })();
     </script>
 {% endblock %}
-
-
-    

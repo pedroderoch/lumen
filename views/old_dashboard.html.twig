@@ -209,7 +209,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{ include('fluxo_caixa_component.html.twig') }}
         
@@ -231,171 +231,38 @@
             </div>
         </div> #}
 
-        <!-- DISTRIBUIÇÃO DE GASTOS + TOP CATEGORIAS -->
-        <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- TOP CATEGORIAS -->
+        <div class="bg-white dark:bg-darkCard p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6">Onde gastei mais?</h3>
 
-            <!-- GRÁFICO DE PIZZA: Distribuição -->
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col">
-                <div class="mb-5">
-                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Distribuição de Gastos</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Como suas despesas estão divididas este mês</p>
-                </div>
+            <div class="space-y-6 flex-1">
+                {% for categoria in gastos_categoria %}
+                {# <pre>
+                {{ categoria|json_encode(constant('JSON_PRETTY_PRINT')) }}
+                 </pre> #}
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: {{ categoria.cor }}20; color: {{ categoria.cor }};">
+                                <i class="ph-fill {{ categoria.icone }}"></i>
+                            </div>
+                            {{ categoria.nome }}
+                        </span>
 
-                <div class="flex flex-col sm:flex-row items-center gap-6 flex-1">
-                    <!-- Canvas -->
-                    <div class="relative w-44 h-44 flex-shrink-0 mx-auto sm:mx-0">
-                        <canvas id="graficoPizza"></canvas>
-                        <!-- Total no centro -->
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="text-xs text-slate-400 dark:text-slate-500">Total</span>
-                            <span id="pizzaTotal" class="text-sm font-bold text-slate-700 dark:text-slate-200"></span>
-                        </div>
+                        <span class="font-bold dark:text-slate-200 mt-1">
+                            R$ {{ categoria.total|number_format(2, ',', '.') }}
+                        </span>
                     </div>
 
-                    <!-- Legenda -->
-                    <div class="flex flex-col gap-3 w-full">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#6366f1"></span>
-                                Investimentos
-                            </span>
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200" id="legInvestimentos">R$ 0,00</span>
-                        </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#f59e0b"></span>
-                                Lazer
-                            </span>
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200" id="legLazer">R$ 0,00</span>
-                        </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#10b981"></span>
-                                Custo Fixo
-                            </span>
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200" id="legFixo">R$ 0,00</span>
-                        </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#f43f5e"></span>
-                                Custo Variável
-                            </span>
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200" id="legVariavel">R$ 0,00</span>
-                        </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#0000CD"></span>
-                                Custo Fixo + Variável
-                            </span>
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200" id="legFixoVariavel">R$ 0,00</span>
-                        </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                        <div class="h-2 rounded-full" style="width: {{categoria.porcentagem}}%; background-color: {{ categoria.cor }};"></div>
+
                     </div>
                 </div>
+                {% endfor %}
             </div>
-
-            <!-- TOP CATEGORIAS -->
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6">Onde gastei mais?</h3>
-
-                <div class="space-y-6 flex-1">
-                    {% for categoria in gastos_categoria %}
-                    <div>
-                        <div class="flex justify-between text-sm mb-2">
-                            <span class="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: {{ categoria.cor }}20; color: {{ categoria.cor }};">
-                                    <i class="ph-fill {{ categoria.icone }}"></i>
-                                </div>
-                                {{ categoria.nome }}
-                            </span>
-                            <span class="font-bold dark:text-slate-200 mt-1">
-                                R$ {{ categoria.total|number_format(2, ',', '.') }}
-                            </span>
-                        </div>
-                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                            <div class="h-2 rounded-full" style="width: {{ categoria.porcentagem }}%; background-color: {{ categoria.cor }};"></div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
         </div>
-
-        {# Dados do gráfico passados pelo controller #}
-        <script>
-        (function () {
-            const dist = {{ grafico_distribuicao | json_encode | raw }};
-
-            const fmt = v => 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            const total = dist.investimentos + dist.lazer + dist.fixo + dist.variavel;
-
-            document.getElementById('legInvestimentos').textContent = fmt(dist.investimentos);
-            document.getElementById('legLazer').textContent         = fmt(dist.lazer);
-            document.getElementById('legFixo').textContent          = fmt(dist.fixo);
-            document.getElementById('legVariavel').textContent      = fmt(dist.variavel);
-            document.getElementById('legFixoVariavel').textContent  = fmt(dist.fixoVariavel);
-            document.getElementById('pizzaTotal').textContent       = fmt(total);
-
-            const isDark = () => document.documentElement.classList.contains('dark');
-
-            function buildChart() {
-                const ctx = document.getElementById('graficoPizza').getContext('2d');
-                return new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Investimentos', 'Lazer', 'Custo Fixo', 'Custo Variável', 'Fixo Variavel'],
-                        datasets: [{
-                            data: [dist.investimentos, dist.lazer, dist.fixo, dist.variavel],
-                            backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#f43f5e', '#0000CD'],
-                            borderColor: isDark() ? '#1e293b' : '#fff',
-                            borderWidth: 3,
-                            hoverOffset: 6,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '72%',
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: isDark() ? '#1e293b' : '#fff',
-                                titleColor:      isDark() ? '#e2e8f0' : '#1e293b',
-                                bodyColor:       isDark() ? '#94a3b8' : '#64748b',
-                                borderColor:     isDark() ? '#334155' : '#e2e8f0',
-                                borderWidth: 1,
-                                padding: 10,
-                                cornerRadius: 10,
-                                callbacks: {
-                                    label: ctx => '  ' + ctx.label + ': ' + fmt(ctx.parsed)
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            let chart;
-            function init() {
-                if (chart) chart.destroy();
-                chart = buildChart();
-            }
-
-            if (typeof Chart === 'undefined') {
-                const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-                s.onload = init;
-                document.head.appendChild(s);
-            } else {
-                init();
-            }
-
-            // Reconstrói ao trocar dark mode
-            new MutationObserver(init).observe(document.documentElement, { attributeFilter: ['class'] });
-        })();
-        </script>
-
-    </div>{# fecha grid lg:grid-cols-3 #}
+    </div>
 
     <!-- TRANSAÇÕES RECENTES -->
     <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-slate-100 dark:border-darkBorder overflow-hidden">

@@ -34,15 +34,46 @@ class CaixinhaController extends BaseController
         $this->render('caixinhas_index.html.twig', $dados);
     }
 
+    // public function show(array $args)
+    // {
+    //     $id = (int) $args['id'];
+
+    //     $caixinha = Caixinha::with(['movimentacoes' => function($query) {
+    //         $query->orderBy('created_at', 'desc');
+    //     }])->where('id', $id)->where('usuario_id', $_SESSION['user_id'])->first();
+
+    //     $this->render('caixinhas_show.html.twig', ['caixinha' => $caixinha]);
+    // }
+
     public function show(array $args)
     {
         $id = (int) $args['id'];
 
         $caixinha = Caixinha::with(['movimentacoes' => function($query) {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('created_at', 'asc'); // ASC para calcular o saldo cronológico
         }])->where('id', $id)->where('usuario_id', $_SESSION['user_id'])->first();
 
-        $this->render('caixinhas_show.html.twig', ['caixinha' => $caixinha]);
+        // Calcula evolução do saldo para o gráfico
+        $saldoAcumulado = 0;
+        $evolucao = [];
+
+        foreach ($caixinha->movimentacoes as $mov) {
+            $saldoAcumulado += $mov->tipo === 'entrada' ? $mov->valor : -$mov->valor;
+            $evolucao[] = [
+                'data'  => $mov->created_at->format('d/m/Y'),
+                'saldo' => round($saldoAcumulado, 2),
+                'tipo'  => $mov->tipo,
+                'valor' => $mov->valor,
+            ];
+        }
+
+        // Inverte para mostrar o histórico mais recente primeiro no extrato
+        $caixinha->setRelation('movimentacoes', $caixinha->movimentacoes->reverse()->values());
+
+        $this->render('caixinhas_show.html.twig', [
+            'caixinha' => $caixinha,
+            'evolucao' => $evolucao,
+        ]);
     }
 
 

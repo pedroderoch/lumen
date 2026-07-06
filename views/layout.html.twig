@@ -89,6 +89,11 @@
                 Caixinhas
             </a>
             
+            <a href="/planejamento" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/planejamento' ? active_class : inactive_class }}">
+                <i class="{{ current_path starts with '/planejamento' ? 'ph-fill' : 'ph' }} ph-chart-line-up text-xl"></i>
+                Planejamento Financeiro
+            </a>
+            
             <p class="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 mt-8">Cadastros Básicos</p>
             
             <a href="/fornecedores" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {{ current_path starts with '/fornecedores' ? active_class : inactive_class }}">
